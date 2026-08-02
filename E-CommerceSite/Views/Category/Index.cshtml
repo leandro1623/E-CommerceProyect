@@ -1,0 +1,153 @@
+﻿@model IEnumerable<E_CommerceSite.Models.Category>
+
+@{
+    ViewData["Title"] = "Categorías";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2 class="mb-1">Categorías</h2>
+
+        <p class="text-muted mb-0">
+            Administración de categorías registradas
+        </p>
+    </div>
+
+    <a asp-action="Create"
+       class="btn btn-primary">
+        + Nueva categoría
+    </a>
+
+</div>
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0">Lista de categorías</h5>
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table id="categoriesTable"
+                   class="table table-striped table-hover align-middle w-100">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var category in Model)
+                    {
+                        <tr>
+                            <td>
+                                @category.Id
+                            </td>
+
+                            <td class="fw-semibold">
+                                @category.Name
+                            </td>
+
+                            <td>
+                                @category.Description
+                            </td>
+
+                            <td>
+                                <div class="d-flex justify-content-center gap-1">
+
+                                    <a asp-action="Details"
+                                       asp-route-id="@category.Id"
+                                       class="btn btn-sm btn-outline-info">
+                                        Ver
+                                    </a>
+
+                                    <a asp-action="Edit"
+                                       asp-route-id="@category.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Editar
+                                    </a>
+
+                                    <a asp-action="Delete"
+                                       asp-route-id="@category.Id"
+                                       class="btn btn-sm btn-outline-danger">
+                                        Eliminar
+                                    </a>
+
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+
+            new DataTable("#categoriesTable", {
+
+                // Cantidad inicial de categorías
+                pageLength: 10,
+
+                // Opciones del selector
+                lengthMenu: [5, 10, 25, 50, 100],
+
+                // Ordenar por ID descendente
+                order: [[0, "desc"]],
+
+                // La columna de acciones no se ordena ni se busca
+                columnDefs: [
+                    {
+                        targets: 3,
+                        orderable: false,
+                        searchable: false
+                    }
+                ],
+
+                // Recordar página, búsqueda y orden
+                stateSave: true,
+
+                language: {
+                    search: "Buscar:",
+                    searchPlaceholder: "Buscar categorías...",
+
+                    lengthMenu: "Mostrar _MENU_ categorías",
+
+                    info: "Mostrando _START_ a _END_ de _TOTAL_ categorías",
+
+                    infoEmpty: "No hay categorías registradas",
+
+                    infoFiltered: "(filtrado de _MAX_ categorías)",
+
+                    zeroRecords: "No se encontraron categorías",
+
+                    emptyTable: "No hay categorías disponibles",
+
+                    paginate: {
+                        first: "Primero",
+                        previous: "Anterior",
+                        next: "Siguiente",
+                        last: "Último"
+                    }
+                }
+            });
+
+        });
+    </script>
+}

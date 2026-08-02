@@ -1,0 +1,161 @@
+﻿@{
+    ViewData["Title"] = "Panel principal";
+}
+
+<div class="container-fluid">
+
+    <!-- Tarjetas de resumen -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Productos</p>
+                    <h2 class="fw-bold mb-0">120</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Clientes</p>
+                    <h2 class="fw-bold mb-0">85</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Pedidos</p>
+                    <h2 class="fw-bold mb-0">48</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Ventas totales</p>
+                    <h2 class="fw-bold mb-0">RD$125,000</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row g-4">
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Ventas mensuales</h5>
+                </div>
+
+                <div class="card-body">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Pedidos por estado</h5>
+                </div>
+
+                <div class="card-body">
+                    <canvas id="ordersChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        // Gráfico de ventas
+        const salesCanvas = document.getElementById("salesChart");
+
+        new Chart(salesCanvas, {
+            type: "line",
+
+            data: {
+                labels: [
+                    "Enero",
+                    "Febrero",
+                    "Marzo",
+                    "Abril",
+                    "Mayo",
+                    "Junio"
+                ],
+
+                datasets: [{
+                    label: "Ventas en RD$",
+
+                    data: [
+                        15000,
+                        22000,
+                        18000,
+                        31000,
+                        27000,
+                        36000
+                    ],
+
+                    borderColor: "#0d6efd",
+                    backgroundColor: "rgba(13, 110, 253, 0.15)",
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Gráfico de pedidos
+        const ordersCanvas = document.getElementById("ordersChart");
+
+        new Chart(ordersCanvas, {
+            type: "doughnut",
+
+            data: {
+                labels: [
+                    "Completados",
+                    "Pendientes",
+                    "Cancelados"
+                ],
+
+                datasets: [{
+                    data: [30, 12, 6],
+
+                    backgroundColor: [
+                        "#198754",
+                        "#ffc107",
+                        "#dc3545"
+                    ],
+
+                    borderWidth: 0
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    </script>
+}

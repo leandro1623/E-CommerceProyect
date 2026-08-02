@@ -1,0 +1,154 @@
+﻿@model RegisterViewModel
+@{
+    ViewData["Title"] = "Crear cuenta";
+}
+
+<div class="auth-page">
+
+    <div class="auth-card auth-card-register">
+
+        <div class="auth-header">
+            <div class="auth-icon">👤</div>
+
+            <h2>Crear una cuenta</h2>
+
+            <p>
+                Completa tus datos para registrarte
+            </p>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">
+                @TempData["Error"]
+            </div>
+        }
+
+        <form asp-controller="Account"
+              asp-action="Register"
+              method="post">
+
+              <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label asp-for="Fullname"
+                       class="form-label">
+                    Nombre completo
+                </label>
+
+                <input id="FullName"
+                       asp-for="Fullname"
+                       name="FullName"
+                       type="text"
+                       class="form-control"
+                       placeholder="Escribe tu nombre completo"
+                       autocomplete="name"
+                       required />
+
+                <span asp-validation-for="Fullname" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email"
+                       class="form-label">
+                    Correo electrónico
+                </label>
+
+                <input id="Email"
+                       asp-for="Email"
+                       name="Email"
+                       type="email"
+                       class="form-control"
+                       placeholder="nombre@correo.com"
+                       autocomplete="email"
+                       required />
+                <span asp-validation-for="Email" class="text-danger"></span>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Password"
+                           class="form-label">
+                        Contraseña
+                    </label>
+
+                    <input id="Password"
+                           asp-for="Password"
+                           name="Password"
+                           type="password"
+                           class="form-control"
+                           placeholder="Contraseña"
+                           autocomplete="new-password"
+                           minlength="6"
+                           required />
+                <span asp-validation-for="Password" class="text-danger"></span>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ConfirmPassword"
+                           class="form-label">
+                        Confirmar contraseña
+                    </label>
+
+                    <input id="ConfirmPassword"
+                           asp-for="ConfirmPassword"
+                           name="ConfirmPassword"
+                           type="password"
+                           class="form-control"
+                           placeholder="Repite la contraseña"
+                           autocomplete="new-password"
+                           minlength="6"
+                           required />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+
+                </div>
+
+            </div>
+
+            <div class="form-check mb-4">
+
+                <input id="AcceptTerms"
+                       asp-for="AcceptTerms"
+                       name="AcceptTerms"
+                       type="checkbox"
+                       value="true"
+                       class="form-check-input"
+                       required />
+
+                <label asp-for="AcceptTerms"
+                       class="form-check-label">
+                    Acepto los términos y condiciones
+                </label>
+                <span asp-validation-for="AcceptTerms" class="text-danger"></span>
+
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary btn-lg w-100">
+                Crear cuenta
+            </button>
+
+        </form>
+
+        <div class="auth-separator">
+            <span>¿Ya tienes una cuenta?</span>
+        </div>
+
+        <a asp-controller="Account"
+           asp-action="Login"
+           class="btn btn-outline-primary w-100">
+            Iniciar sesión
+        </a>
+
+    </div>
+
+</div>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+}

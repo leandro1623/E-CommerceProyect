@@ -1,0 +1,119 @@
+﻿@model LoginViewModel
+@{
+    ViewData["Title"] = "Iniciar sesión";
+    var returnUrl = Context.Request.Query["returnUrl"].ToString();
+}
+
+<div class="auth-page">
+
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <div class="auth-icon">🔐</div>
+
+            <h2>Bienvenido</h2>
+
+            <p>
+                Ingresa tus datos para acceder a tu cuenta
+            </p>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">
+                @TempData["Error"]
+            </div>
+        }
+
+        <form asp-controller="Account"
+              asp-action="Login"
+              method="post">
+
+              <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @Html.AntiForgeryToken()
+
+            <input type="hidden"
+                   name="returnUrl"
+                   value="@returnUrl" />
+
+            <div class="mb-3">
+                <label asp-for="Email"
+                       class="form-label">
+                    Correo electrónico
+                </label>
+
+                <input id="Email"
+                       asp-for="Email"
+                       name="Email"
+                       type="email"
+                       class="form-control form-control-lg"
+                       placeholder="nombre@correo.com"
+                       autocomplete="email"
+                       required />
+                 <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between">
+                    <label asp-for="Password"
+                           class="form-label">
+                        Contraseña
+                    </label>
+
+                    <a asp-controller="Account"
+                       asp-action="ForgotPassword"
+                       class="auth-small-link">
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                </div>
+
+                <input id="Password"
+                       asp-for="Password"
+                       name="Password"
+                       type="password"
+                       class="form-control form-control-lg"
+                       placeholder="Ingresa tu contraseña"
+                       autocomplete="current-password"
+                       required />
+                <span asp-validation-for="Password" class="text-danger"></span>
+
+            </div>
+
+            <div class="form-check mb-4">
+                <input id="RememberMe"
+                       asp-for="RememberMe"
+                       name="RememberMe"
+                       type="checkbox"
+                       value="true"
+                       class="form-check-input" />
+
+                <label asp-for="RememberMe"
+                       class="form-check-label">
+                    Mantener sesión iniciada
+                </label>
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary btn-lg w-100">
+                Iniciar sesión
+            </button>
+
+        </form>
+
+        <div class="auth-separator">
+            <span>¿No tienes una cuenta?</span>
+        </div>
+
+        <a asp-controller="Account"
+           asp-action="Register"
+           class="btn btn-outline-primary w-100">
+            Crear una cuenta
+        </a>
+
+    </div>
+
+</div>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+}
