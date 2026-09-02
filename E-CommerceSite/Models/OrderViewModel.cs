@@ -1,6 +1,6 @@
 ﻿namespace E_CommerceSite.Models
 {
-    public class Order
+    public class OrderViewModel
     {
         public Guid Id { get; set; }
 
@@ -12,6 +12,6 @@
 
         public Guid CustomerId { get; set; }
 
-        public Customer? Customer { get; set; }
+        public CustomerViewModel? Customer { get; set; }
     }
 }

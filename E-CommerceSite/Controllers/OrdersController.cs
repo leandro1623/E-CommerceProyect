@@ -8,14 +8,14 @@ namespace E_CommerceSite.Controllers
         public IActionResult Index()
         {
             dynamic customerId = Guid.NewGuid();
-            var orders = new List<Order>();
-            orders.Add(new Order()
+            var orders = new List<OrderViewModel>();
+            orders.Add(new OrderViewModel()
             {
                 Id = Guid.NewGuid(),
                 Total = 50,
                 OrderDate = DateTime.Now,
                 Status = "Completado",
-                Customer = new Customer() { Id = customerId, Name = "TestName"},
+                Customer = new CustomerViewModel() { Id = customerId, Name = "TestName"},
                 CustomerId = customerId
             });
 

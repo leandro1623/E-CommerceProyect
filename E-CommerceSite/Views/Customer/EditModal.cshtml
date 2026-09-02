@@ -1,0 +1,145 @@
+﻿@model EditarCustomerViewModel
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+<div class="modal fade"
+     id="editCustomerModal"
+     tabindex="-1"
+     aria-labelledby="editCustomerModalLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+
+                <!-- Id del cliente que se editará -->
+                <input type="hidden"
+                       asp-for="Id"
+                       id="editCustomerId"
+                       name="Id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCustomerModalLabel">
+                        Editar cliente
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <!-- Nombre -->
+                    <div class="mb-3">
+                        <label for="editCustomerName"
+                               class="form-label">
+                            Nombre completo
+                        </label>
+
+                        <input type="text"
+                               asp-for="Name"
+                               id="editCustomerName"
+                               name="Name"
+                               class="form-control"
+                               maxlength="100"
+                               required>
+                    </div>
+
+                    <!-- Correo -->
+                    <div class="mb-3">
+                        <label for="editCustomerEmail"
+                               class="form-label">
+                            Correo electrónico
+                        </label>
+
+                        <input type="email"
+                               asp-for="Email"
+                               id="editCustomerEmail"
+                               name="Email"
+                               class="form-control"
+                               maxlength="150"
+                               required>
+                    </div>
+
+                    <div class="row">
+
+                        <!-- Teléfono -->
+                        <div class="col-md-6 mb-3">
+                            <label for="editCustomerPhone"
+                                   class="form-label">
+                                Teléfono
+                            </label>
+
+                            <input type="tel"
+                                   asp-for="Phone"
+                                   id="editCustomerPhone"
+                                   name="Phone"
+                                   class="form-control"
+                                   maxlength="20">
+                        </div>
+
+                        <!-- Dirección -->
+                        <div class="col-md-6 mb-3">
+                            <label for="editCustomerAddress"
+                                   class="form-label">
+                                Dirección
+                            </label>
+
+                            <input type="text"
+                                   asp-for="Address"
+                                   id="editCustomerAddress"
+                                   name="Address"
+                                   class="form-control"
+                                   maxlength="250">
+                        </div>
+
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="form-check form-switch">
+                        <input type="checkbox"
+                               asp-for="IsActive"
+                               id="editCustomerIsActive"
+                               name="IsActive"
+                               value="true"
+                               class="form-check-input" disabled>
+
+                        <!-- Envía false si el checkbox no está marcado -->
+                        <input type="hidden"
+                               name="IsActive"
+                               value="false">
+
+                        <label for="editCustomerIsActive"
+                               class="form-check-label">
+                            Cliente activo
+                        </label>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-warning">
+                        Guardar cambios
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>

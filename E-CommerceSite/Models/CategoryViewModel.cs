@@ -1,6 +1,6 @@
 ﻿namespace E_CommerceSite.Models
 {
-    public class Category
+    public class CategoryViewModel
     {
 
         public Guid Id { get; set; }

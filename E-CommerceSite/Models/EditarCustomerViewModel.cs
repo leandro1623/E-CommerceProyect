@@ -1,9 +1,8 @@
-﻿using E_CommerceSite.Controllers;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace E_CommerceSite.Models
 {
-    public class Customer
+    public class EditarCustomerViewModel
     {
         public Guid Id { get; set; }
 
@@ -16,6 +15,7 @@ namespace E_CommerceSite.Models
         [StringLength(150)]
         public string Email { get; set; } = string.Empty;
 
+
         [Phone(ErrorMessage = "El teléfono no es válido")]
         [StringLength(20)]
         public string? Phone { get; set; }
@@ -23,11 +23,7 @@ namespace E_CommerceSite.Models
         [StringLength(250)]
         public string? Address { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public bool IsActive { get; set; }
 
-        public bool IsActive { get; set; } = true;
-
-        public ICollection<Order> Orders { get; set; }
-            = new List<Order>();
     }
 }

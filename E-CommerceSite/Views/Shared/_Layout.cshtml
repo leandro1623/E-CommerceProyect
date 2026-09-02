@@ -1,7 +1,7 @@
-﻿@using E_CommerceSite.Entities
-@using E_CommerceSite.Models
+﻿@using E_CommerceSite.Negocio.Services
 @using Microsoft.AspNetCore.Identity
-@inject UserManager<UserCustomer> UserManager
+@inject IManageUser UserManager
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -23,10 +23,8 @@
           asp-append-version="true" />
 
     <link rel="stylesheet"
-          href="~/E_CommerceSite.styles.css"
+          href="~/E-CommerceSite.styles.css"
           asp-append-version="true" />
-
-
 
 </head>
 
@@ -95,7 +93,7 @@
 
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        var currentUser = await UserManager.GetUserAsync(User);
+                        var currentUser = await UserManager.GetUserManager().GetUserAsync(User);
 
                         var userName = currentUser?.Fullname
                                        ?? User.Identity?.Name

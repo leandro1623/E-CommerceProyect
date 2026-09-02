@@ -1,4 +1,7 @@
 ﻿@model RegisterViewModel
+@using E_CommerceSite.Negocio.Services
+@using Microsoft.AspNetCore.Identity
+@inject IManageUser UserManager
 @{
     ViewData["Title"] = "Crear cuenta";
 }
@@ -134,16 +137,19 @@
             </button>
 
         </form>
+        @if (User.Identity?.IsAuthenticated == false)
+        {
 
-        <div class="auth-separator">
-            <span>¿Ya tienes una cuenta?</span>
-        </div>
-
-        <a asp-controller="Account"
-           asp-action="Login"
-           class="btn btn-outline-primary w-100">
-            Iniciar sesión
-        </a>
+            
+            <div class="auth-separator">
+                <span>¿Ya tienes una cuenta?</span>
+            </div>
+            <a asp-controller="Account"
+               asp-action="Login"
+               class="btn btn-outline-primary w-100">
+                Iniciar sesión
+            </a>
+        }
 
     </div>
 

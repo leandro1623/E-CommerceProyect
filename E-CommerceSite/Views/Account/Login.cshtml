@@ -5,9 +5,27 @@
     // Layout = null;
 }
 
+
+
 <div class="auth-page">
 
     <div class="auth-card">
+
+        @if (TempData["LoginMessageUserCreated"] is string successMessage)
+        {
+            <div id="deleteAlert"
+                 class="alert alert-success alert-dismissible fade show"
+                 role="alert">
+
+                @successMessage
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Cerrar">
+                </button>
+            </div>
+        }
 
         <div class="auth-header">
             <div class="auth-icon">🔐</div>

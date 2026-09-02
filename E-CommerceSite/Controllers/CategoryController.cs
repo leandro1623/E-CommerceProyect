@@ -7,7 +7,7 @@ namespace E_CommerceSite.Controllers
     {
         public IActionResult Index()
         {
-            var categories = new List<Category>();
+            var categories = new List<CategoryViewModel>();
 
             return View(categories);
         }

@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="E-CommerceSite.Datos/E-CommerceSite.Datos.csproj" Id="b5e8ff57-0fad-417f-b266-cc852591f285" />
+  <Project Path="E-CommerceSite.Negocio/E-CommerceSite.Negocio.csproj" Id="4bd0e2a5-2f70-4a92-817d-bf1680207915" />
   <Project Path="E-CommerceSite/E-CommerceSite.csproj" />
 </Solution>

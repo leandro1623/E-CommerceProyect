@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace E_CommerceSite.Models
+namespace E_CommerceSite.Datos.Account
 {
     public class RegisterViewModel
     {
@@ -26,7 +26,7 @@ namespace E_CommerceSite.Models
 
         [Required]
         [DataType(DataType.Password)]
-        [Compare("Password", ErrorMessage = "Password`s do not match")]
+        [Compare("Password")]
         public string ConfirmPassword { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Debe aceptar los terminos y condiciones para poder registrarse en nuestro sistema")]

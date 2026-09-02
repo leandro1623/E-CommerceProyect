@@ -35,4 +35,18 @@
             closeMobileSidebar();
         }
     });
+
 });
+
+const successAlert =
+    document.getElementById("deleteAlert");
+
+if (successAlert) {
+    setTimeout(function () {
+        successAlert.classList.remove("show");
+
+        setTimeout(function () {
+            successAlert.remove();
+        }, 200);
+    }, 5000);
+}

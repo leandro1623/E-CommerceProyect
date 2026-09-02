@@ -1,5 +1,6 @@
-﻿using E_CommerceSite.Entities;
-using E_CommerceSite.Models;
+﻿using E_CommerceSite.Models;
+using E_CommerceSite.Negocio.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,15 +8,16 @@ namespace E_CommerceSite.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly UserManager<UserCustomer> userManager;
-        private readonly SignInManager<UserCustomer> signInManager;
+        private readonly IManageUser userManager;
+        private readonly ISignInManager signInManager;
 
-        public AccountController(UserManager<UserCustomer> userManager, SignInManager<UserCustomer> signInManager)
+        public AccountController(IManageUser userManager, ISignInManager signInManager)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
         }
 
+        [AllowAnonymous]
         public IActionResult Register()
         {
             return View();
@@ -23,6 +25,7 @@ namespace E_CommerceSite.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
@@ -30,14 +33,14 @@ namespace E_CommerceSite.Controllers
                 return View(model);
             }
 
-            var user = new UserCustomer() { Fullname = model.Fullname ,Email = model.Email, UserName = model.Email };
-
-            var result = await userManager.CreateAsync(user, model.Password);
+            var result = await userManager.CreateAsync(model.Fullname, model.Email, model.Email,model.Password);
 
             if (result.Succeeded)
             {
-                await signInManager.PasswordSignInAsync(user, model.Password , false, false);
-                return RedirectToAction("Index", "Home");
+                //await signInManager.GetSignInManager().PasswordSignInAsync(model.Email, model.Password , false, false);
+
+                TempData["LoginMessageUserCreated"] = "Usuario registrado correctamente";
+                return RedirectToAction(nameof(Login), "Account");
             }
 
             ModelState.AddModelError(string.Empty, result.ToString());
@@ -45,6 +48,8 @@ namespace E_CommerceSite.Controllers
             return View(model);
         }
 
+
+        [AllowAnonymous]
         public IActionResult Login()
         {
             return View();
@@ -52,6 +57,7 @@ namespace E_CommerceSite.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
@@ -59,7 +65,7 @@ namespace E_CommerceSite.Controllers
                 return View(model);
             }
 
-            var user = await userManager.FindByEmailAsync(model.Email);
+            var user = await userManager.GetUserManager().FindByEmailAsync(model.Email);
 
             if(user is null)
             {
@@ -67,7 +73,7 @@ namespace E_CommerceSite.Controllers
                 return View(model);
             }
 
-            var result = await signInManager.PasswordSignInAsync(user!, model.Password, model.RememberMe, false);
+            var result = await signInManager.GetSignInManager().PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
 
             if (result.Succeeded)
             {
@@ -83,7 +89,7 @@ namespace E_CommerceSite.Controllers
         [HttpGet]
         public async Task<IActionResult> Logout()
         {
-            await signInManager.SignOutAsync();
+            await signInManager.GetSignInManager().SignOutAsync();
             return RedirectToAction("Login", "Account");
         }
     }

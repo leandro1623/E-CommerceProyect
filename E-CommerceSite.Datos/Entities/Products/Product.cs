@@ -1,10 +1,12 @@
-﻿namespace E_CommerceSite.Models
+﻿
+
+namespace E_CommerceSite.Datos.Product
 {
     public class Product
     {
         public Product()
         {
-            Category = new Category()
+            Category = new Category.Category()
             {
                 Name = "Test",
             };
@@ -19,7 +21,7 @@
 
 
         //Category
-        public Category Category { get; set; }
+        public Category.Category Category { get; set; }
 
     }
 }

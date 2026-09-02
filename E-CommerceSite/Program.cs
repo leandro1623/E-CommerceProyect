@@ -1,22 +1,35 @@
 using E_CommerceSite.DATA;
-using E_CommerceSite.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using E_CommerceSite.Negocio.Injection;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+
+builder.Services.AddControllersWithViews(opc => opc.Filters.Add(new AuthorizeFilter(policy)));
 
 
-builder.Services.AddDbContext<GlobalDBContext>(o => o.UseSqlServer("name=DefaultConnection"));
+builder.Services.SetServices();//Set all Iservice that i created for mi use in the app
 
-builder.Services.AddIdentity<UserCustomer, IdentityRole>(o =>
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!
+    ?? throw new InvalidOperationException("No se encontro la cadena de connecion con el nombre DefaultConnection");
 
-    o.SignIn.RequireConfirmedAccount = false
+builder.Services.SetDbContext(connectionString);
 
-).AddEntityFrameworkStores<GlobalDBContext>().AddDefaultTokenProviders();
+//builder.Services.AddDbContext<GlobalDBContext>(o => o.UseSqlServer("name=DefaultConnection"));
+
+builder.Services.SetIdentityServices();
+
+//builder.Services.AddIdentity<UserCustomer, IdentityRole>(o =>
+
+//    o.SignIn.RequireConfirmedAccount = false
+
+//).AddEntityFrameworkStores<GlobalDBContext>().AddDefaultTokenProviders();
 
 var app = builder.Build();
 
@@ -29,6 +42,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
 app.UseRouting();
 
 app.UseAuthentication();
