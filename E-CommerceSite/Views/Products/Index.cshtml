@@ -1,8 +1,41 @@
-﻿@model IEnumerable<E_CommerceSite.Models.ProductViewModel>
+﻿@model ProductViewModel
 
 @{
     ViewData["Title"] = "Productos";
 }
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div id="deleteAlert"
+         class="alert alert-success alert-dismissible fade show"
+         role="alert">
+
+        <strong>¡Listo!</strong> @successMessage
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Cerrar">
+        </button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div id="deleteAlert"
+         class="alert alert-danger alert-dismissible fade show"
+         role="alert">
+
+        <strong>¡Error!</strong> @errorMessage
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Cerrar">
+        </button>
+    </div>
+}
+
 
 <div class="d-flex justify-content-between align-items-center mb-4">
 
@@ -14,10 +47,14 @@
         </p>
     </div>
 
-    <a asp-action="Create"
+    @* <a asp-action="Create"
        class="btn btn-primary">
         + Nuevo producto
-    </a>
+    </a> *@
+
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#CreateProductModalId">
+        + Nuevo producto
+    </button>
 
 </div>
 
@@ -47,73 +84,92 @@
                 </thead>
 
                 <tbody>
+                    @if(Model.Products != null)
+                    {
+                        if (Model.Products.Count != 0)
+                        {
+                            @foreach (var product in Model.Products)
+                            {
+                                <tr>
+                                    <td>
+                                        @product.Id
+                                    </td>
 
-                    @foreach (var product in Model)
+                                    <td class="fw-semibold">
+                                        @product.Name
+                                    </td>
+
+                                    <td>
+                                        @product.Category?.Name
+                                    </td>
+
+                                    <td data-order="@product.Price">
+                                        @product.Price.ToString("C")
+                                    </td>
+
+                                    <td data-order="@product.Stock">
+                                        @product.Stock
+                                    </td>
+
+                                    <td>
+                                        @if (product.Stock > 0)
+                                        {
+                                            <span class="badge bg-success">
+                                                Disponible
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">
+                                                Agotado
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @* <div class="d-flex gap-1">
+
+                                            <a asp-action="Details"
+                                               asp-route-id="@product.Id"
+                                               class="btn btn-sm btn-outline-info">
+                                                Ver
+                                            </a>
+
+                                            <a asp-action="Edit"
+                                               asp-route-id="@product.Id"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Editar
+                                            </a>
+
+                                            <a asp-action="Delete"
+                                               asp-route-id="@product.Id"
+                                               class="btn btn-sm btn-outline-danger">
+                                                Eliminar
+                                            </a>
+
+                                        </div> *@
+
+                                        <partial name="ProductActions" model="product" />
+
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        
+                    }
+                    @* else
                     {
                         <tr>
-                            <td>
-                                @product.Id
-                            </td>
-
-                            <td class="fw-semibold">
-                                @product.Name
-                            </td>
-
-                            <td>
-                                @product.Category?.Name
-                            </td>
-
-                            <td data-order="@product.Price">
-                                @product.Price.ToString("C")
-                            </td>
-
-                            <td data-order="@product.Stock">
-                                @product.Stock
-                            </td>
-
-                            <td>
-                                @if (product.Stock > 0)
-                                {
-                                    <span class="badge bg-success">
-                                        Disponible
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">
-                                        Agotado
-                                    </span>
-                                }
-                            </td>
-
-                            <td>
-                                <div class="d-flex gap-1">
-
-                                    <a asp-action="Details"
-                                       asp-route-id="@product.Id"
-                                       class="btn btn-sm btn-outline-info">
-                                        Ver
-                                    </a>
-
-                                    <a asp-action="Edit"
-                                       asp-route-id="@product.Id"
-                                       class="btn btn-sm btn-outline-primary">
-                                        Editar
-                                    </a>
-
-                                    <a asp-action="Delete"
-                                       asp-route-id="@product.Id"
-                                       class="btn btn-sm btn-outline-danger">
-                                        Eliminar
-                                    </a>
-
-                                </div>
-                            </td>
+                            <td>No hay productos para mosstrar</td>
                         </tr>
-                    }
+                    } *@
+
 
                 </tbody>
             </table>
+
+            <partial name="CreateProductModal" model="Model" />
+            <partial name="ProductModals" model="Model" />
 
         </div>
     </div>
@@ -170,6 +226,227 @@
                     }
                 }
             });
+
+
+
+            //modals
+             (() => {
+            "use strict";
+
+            function initializeProductModals() {
+                const infoElement =
+                    document.getElementById("productInfoModal");
+
+                const editElement =
+                    document.getElementById("editProductModal");
+
+                const confirmationElement =
+                    document.getElementById("confirmDeleteProductModal");
+
+                if (!infoElement || !editElement || !confirmationElement) return;
+
+                if (infoElement.dataset.productModalsInitialized === "true") return;
+                infoElement.dataset.productModalsInitialized = "true";
+
+                const infoModal =
+                    bootstrap.Modal.getOrCreateInstance(infoElement);
+
+                const confirmationModal =
+                    bootstrap.Modal.getOrCreateInstance(confirmationElement);
+
+                const editForm =
+                    document.getElementById("editProductForm");
+
+                const deleteForm =
+                    document.getElementById("deleteProductForm");
+
+                const deleteId =
+                    document.getElementById("deleteProductId");
+
+                const deleteSubmit =
+                    document.getElementById("confirmDeleteProductSubmit");
+
+                const priceFormat = new Intl.NumberFormat("es-DO", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                let selectedProduct = null;
+                let openConfirmationAfterHide = false;
+                let deleteSubmitted = false;
+
+                function readProduct(button) {
+                    const source = button?.closest(".product-actions");
+
+                    if (!source?.dataset.productId) return null;
+
+                    return {
+                        id: source.dataset.productId,
+                        name: source.dataset.productName || "",
+                        description: source.dataset.productDescription || "",
+                        price: source.dataset.productPrice || "0.00",
+                        stock: source.dataset.productStock || "0",
+                        categoryId: source.dataset.categoryId || "",
+                        categoryName: source.dataset.categoryName || ""
+                    };
+                }
+
+                // Mostrar información del producto seleccionado.
+                infoElement.addEventListener("show.bs.modal", (event) => {
+                    const product = readProduct(event.relatedTarget);
+
+                    // Al regresar de la confirmación, conservar el producto.
+                    if (product) selectedProduct = product;
+
+                    if (!selectedProduct) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    document.getElementById("productInfoId").textContent =
+                        selectedProduct.id;
+
+                    document.getElementById("productInfoName").textContent =
+                        selectedProduct.name;
+
+                    document.getElementById("productInfoDescription").textContent =
+                        selectedProduct.description.trim()
+                            ? selectedProduct.description
+                            : "Sin descripción.";
+
+                    document.getElementById("productInfoPrice").textContent =
+                        "RD$ " + priceFormat.format(Number(selectedProduct.price));
+
+                    document.getElementById("productInfoStock").textContent =
+                        selectedProduct.stock;
+
+                    document.getElementById("productInfoCategory").textContent =
+                        selectedProduct.categoryName.trim()
+                            ? selectedProduct.categoryName
+                            : "Sin categoría.";
+                });
+
+                // Solicitar el cambio del detalle a la confirmación.
+                document.getElementById("openDeleteProductConfirmation")
+                    .addEventListener("click", () => {
+                        if (!selectedProduct || openConfirmationAfterHide) return;
+
+                        openConfirmationAfterHide = true;
+                        infoModal.hide();
+                    });
+
+                // Atender también un clic durante la animación de apertura.
+                infoElement.addEventListener("shown.bs.modal", () => {
+                    if (openConfirmationAfterHide) infoModal.hide();
+                });
+
+                // Abrir la confirmación cuando termine de cerrar el detalle.
+                infoElement.addEventListener("hidden.bs.modal", () => {
+                    if (!openConfirmationAfterHide) return;
+
+                    openConfirmationAfterHide = false;
+                    confirmationModal.show();
+                });
+
+                // Preparar el formulario de eliminación.
+                confirmationElement.addEventListener("show.bs.modal", (event) => {
+                    if (!selectedProduct) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    deleteId.value = selectedProduct.id;
+
+                    document.getElementById("productDeleteName").textContent =
+                        selectedProduct.name;
+
+                    deleteSubmitted = false;
+                    deleteSubmit.disabled = false;
+                });
+
+                // Cancelar, la X, Escape o el fondo devuelven al detalle.
+                confirmationElement.addEventListener("hidden.bs.modal", () => {
+                    if (!deleteSubmitted && selectedProduct) {
+                        infoModal.show();
+                    }
+                });
+
+                // Cargar los campos del formulario de edición.
+                editElement.addEventListener("show.bs.modal", (event) => {
+                    const product = readProduct(event.relatedTarget);
+
+                    if (!product) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    editForm.reset();
+
+                    const validator = window.jQuery
+                        ? window.jQuery(editForm).data("validator")
+                        : null;
+
+                    if (validator) validator.resetForm();
+
+                    editForm.querySelectorAll(".input-validation-error, .is-invalid")
+                        .forEach((field) => {
+                            field.classList.remove(
+                                "input-validation-error",
+                                "is-invalid"
+                            );
+                        });
+
+                    editForm.querySelectorAll("[data-valmsg-for]")
+                        .forEach((message) => {
+                            message.textContent = "";
+                            message.classList.remove("field-validation-error");
+                            message.classList.add("field-validation-valid");
+                        });
+
+                    document.getElementById("editProductId").value =
+                        product.id;
+
+                    document.getElementById("editProductName").value =
+                        product.name;
+
+                    document.getElementById("editProductDescription").value =
+                        product.description;
+
+                    document.getElementById("editProductPrice").value =
+                        product.price;
+
+                    document.getElementById("editProductStock").value =
+                        product.stock;
+
+                    document.getElementById("editProductCategory").value =
+                        product.categoryId;
+                });
+
+                // Permitir el POST solamente una vez por confirmación.
+                deleteForm.addEventListener("submit", (event) => {
+                    if (event.defaultPrevented) return;
+
+                    if (!deleteId.value || deleteSubmitted) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    deleteSubmitted = true;
+                    deleteSubmit.disabled = true;
+                });
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener(
+                    "DOMContentLoaded",
+                    initializeProductModals,
+                    { once: true }
+                );
+            } else {
+                initializeProductModals();
+            }
+        })();
+
 
         });
     </script>

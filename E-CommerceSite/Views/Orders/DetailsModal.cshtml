@@ -1,0 +1,177 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+
+<div class="modal fade"
+     id="orderDetailsModal"
+     tabindex="-1"
+     aria-labelledby="orderDetailsModalLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="orderDetailsModalLabel">
+                        Detalle del pedido
+                    </h5>
+
+                    <small id="orderDetailsNumber"
+                           class="text-muted">
+                    </small>
+                </div>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Cargando -->
+                <div id="orderDetailsLoading"
+                     class="text-center py-5">
+
+                    <div class="spinner-border text-primary"
+                         role="status">
+                    </div>
+
+                    <p class="mt-2 mb-0">
+                        Cargando pedido...
+                    </p>
+                </div>
+
+                <!-- Error -->
+                <div id="orderDetailsError"
+                     class="alert alert-danger d-none"
+                     role="alert">
+
+                    No fue posible cargar el pedido.
+                </div>
+
+                <!-- Contenido -->
+                <div id="orderDetailsContent" class="d-none">
+
+                    <div class="row mb-4">
+
+                        <!-- Cliente -->
+                        <div class="col-md-7 mb-3 mb-md-0">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    Información del cliente
+                                </div>
+
+                                <div class="card-body">
+                                    <p class="mb-2">
+                                        <strong>Nombre:</strong>
+                                        <span id="orderCustomerName"></span>
+                                    </p>
+
+                                    <p class="mb-2">
+                                        <strong>Correo:</strong>
+                                        <span id="orderCustomerEmail"></span>
+                                    </p>
+
+                                    <p class="mb-2">
+                                        <strong>Teléfono:</strong>
+                                        <span id="orderCustomerPhone"></span>
+                                    </p>
+
+                                    <p class="mb-0">
+                                        <strong>Dirección:</strong>
+                                        <span id="orderCustomerAddress"></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información del pedido -->
+                        <div class="col-md-5">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    Información del pedido
+                                </div>
+
+                                <div class="card-body">
+                                    <p class="mb-3">
+                                        <strong>Fecha:</strong><br>
+                                        <span id="orderDate"></span>
+                                    </p>
+
+                                    <p class="mb-0">
+                                        <strong>Estado:</strong><br>
+
+                                        <span id="orderStatus"
+                                              class="badge">
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <h6>Productos del pedido</h6>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="orderProductsBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row justify-content-end">
+                        <div class="col-md-5">
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+
+                                <strong id="orderSubtotal">
+                                    RD$0.00
+                                </strong>
+                            </div>
+
+                            <hr>
+
+                            <div class="d-flex justify-content-between fs-5">
+                                <strong>Total:</strong>
+
+                                <strong id="orderTotal"
+                                        class="text-primary">
+                                    RD$0.00
+                                </strong>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>

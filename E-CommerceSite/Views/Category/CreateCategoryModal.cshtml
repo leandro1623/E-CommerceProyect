@@ -1,0 +1,103 @@
+﻿@model CategoryViewModel
+
+<div class="modal fade"
+     id="createCategoryModal"
+     tabindex="-1"
+     aria-labelledby="createCategoryModalLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form asp-action="Create"
+                  method="post"
+                  id="createCategoryForm">
+
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title"
+                        id="createCategoryModalLabel">
+                        Crear categoría
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="alert alert-danger d-none">
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label asp-for="Name"
+                               class="form-label">
+                            Nombre
+                        </label>
+
+                        <input asp-for="Name"
+                               class="form-control"
+                               placeholder="Nombre de la categoría"
+                               maxlength="100"
+                               autocomplete="off"
+                               required />
+
+                        <span asp-validation-for="Name"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label asp-for="Description"
+                               class="form-label">
+                            Descripción
+                        </label>
+
+                        <textarea asp-for="Description"
+                                  class="form-control"
+                                  placeholder="Descripción de la categoría"
+                                  maxlength="250"
+                                  rows="4"
+                                  style="resize: none; overflow-y: auto;"></textarea>
+
+                        <span asp-validation-for="Description"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Crear categoría
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>

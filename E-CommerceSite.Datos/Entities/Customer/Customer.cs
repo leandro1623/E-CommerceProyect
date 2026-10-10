@@ -1,4 +1,4 @@
-﻿using E_CommerceSite.Datos.Order;
+﻿using E_CommerceSite.Datos.OrderNameSpace;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
@@ -29,8 +29,8 @@ namespace E_CommerceSite.Datos.Customer
 
         //public bool IsActive { get; set; } = true;
 
-        public ICollection<Order.Order> Orders { get; set; }
-            = new List<Order.Order>();
+        public ICollection<Order> Orders { get; set; }
+            = new List<Order>();
 
         //[Required]
         //public string UserEntityId { get; set; }

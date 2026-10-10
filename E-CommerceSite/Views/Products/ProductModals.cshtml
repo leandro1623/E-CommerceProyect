@@ -1,0 +1,285 @@
+﻿@model ProductViewModel
+
+@{
+    var categories = Model.Category?.Categories
+        ?? new List<CategoryViewModel>();
+}
+
+<!-- Información del producto -->
+<div class="modal fade"
+     id="productInfoModal"
+     tabindex="-1"
+     aria-labelledby="productInfoModalLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="productInfoModalLabel">
+                    Información del producto
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Identificador</dt>
+                    <dd class="col-sm-9 font-monospace small text-break"
+                        id="productInfoId"></dd>
+
+                    <dt class="col-sm-3">Nombre</dt>
+                    <dd class="col-sm-9 text-break"
+                        id="productInfoName"></dd>
+
+                    <dt class="col-sm-3">Categoría</dt>
+                    <dd class="col-sm-9 text-break"
+                        id="productInfoCategory"></dd>
+
+                    <dt class="col-sm-3">Precio</dt>
+                    <dd class="col-sm-9"
+                        id="productInfoPrice"></dd>
+
+                    <dt class="col-sm-3">Stock</dt>
+                    <dd class="col-sm-9"
+                        id="productInfoStock"></dd>
+
+                    <dt class="col-sm-3">Descripción</dt>
+                    <dd class="col-sm-9 mb-0 text-break"
+                        id="productInfoDescription"
+                        style="white-space: pre-wrap;"></dd>
+                </dl>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+
+                <button type="button"
+                        class="btn btn-danger"
+                        id="openDeleteProductConfirmation">
+                    Eliminar producto
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Editar producto -->
+<div class="modal fade"
+     id="editProductModal"
+     tabindex="-1"
+     aria-labelledby="editProductModalLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+
+        <form asp-action="Edit"
+              asp-antiforgery="true"
+              method="post"
+              id="editProductForm"
+              class="modal-content">
+
+            <input asp-for="Id"
+                   type="hidden"
+                   id="editProductId" />
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProductModalLabel">
+                    Editar producto
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label for="editProductName" class="form-label">
+                        Nombre
+                    </label>
+
+                    <input asp-for="Name"
+                           id="editProductName"
+                           class="form-control"
+                           placeholder="Nombre del producto"
+                           required />
+
+                    <span asp-validation-for="Name"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label for="editProductDescription" class="form-label">
+                        Descripción
+                    </label>
+
+                    <textarea asp-for="Description"
+                              id="editProductDescription"
+                              class="form-control"
+                              rows="4"
+                              required
+                              style="height: 120px; resize: vertical; overflow-y: auto;"></textarea>
+
+                    <span asp-validation-for="Description"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="editProductPrice" class="form-label">
+                            Precio (RD$)
+                        </label>
+
+                        <input asp-for="Price"
+                               id="editProductPrice"
+                               type="number"
+                               class="form-control"
+                               min="0"
+                               step="0.01"
+                               required />
+
+                        <span asp-validation-for="Price"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="editProductStock" class="form-label">
+                            Stock
+                        </label>
+
+                        <input asp-for="Stock"
+                               id="editProductStock"
+                               type="number"
+                               class="form-control"
+                               min="0"
+                               step="1"
+                               required />
+
+                        <span asp-validation-for="Stock"
+                              class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="editProductCategory" class="form-label">
+                        Categoría
+                    </label>
+
+                    <select asp-for="Category.Id"
+                            id="editProductCategory"
+                            class="form-select"
+                            required>
+
+                        <option value="">
+                            Selecciona una categoría
+                        </option>
+
+                        @foreach (var category in categories)
+                        {
+                            <option value="@category.Id">
+                                @category.Name
+                            </option>
+                        }
+                    </select>
+
+                    <span asp-validation-for="Category.Id"
+                          class="text-danger"></span>
+
+                    @if (categories.Count == 0)
+                    {
+                        <div class="text-danger small mt-2">
+                            No hay categorías disponibles.
+                            Crea una categoría para editar el producto.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="submit"
+                        class="btn btn-primary"
+                        disabled="@(categories.Count == 0)">
+                    Guardar cambios
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- Confirmar eliminación -->
+<div class="modal fade"
+     id="confirmDeleteProductModal"
+     tabindex="-1"
+     aria-labelledby="confirmDeleteProductModalLabel"
+     aria-describedby="confirmDeleteProductDescription"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+
+        <form asp-action="Delete"
+              asp-antiforgery="true"
+              method="post"
+              id="deleteProductForm"
+              class="modal-content">
+
+            <input asp-for="Id"
+                   type="hidden"
+                   id="deleteProductId" />
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteProductModalLabel">
+                    Confirmar eliminación
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cancelar y volver al detalle"></button>
+            </div>
+
+            <div class="modal-body" id="confirmDeleteProductDescription">
+                <p class="mb-0">
+                    ¿Deseas eliminar el producto
+                    <strong id="productDeleteName"
+                            class="text-break"></strong>?
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="submit"
+                        class="btn btn-danger"
+                        id="confirmDeleteProductSubmit">
+                    Confirmar eliminación
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>

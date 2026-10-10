@@ -1,0 +1,142 @@
+﻿@model ProductViewModel
+
+
+
+<div id="CreateProductModalId" class="modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true" aria-labelledby="createProductModalLabel">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="Create" method="post" id="createProductForm">
+                @Html.AntiForgeryToken()
+
+                @* HEADER *@
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createProductModalLabel">Crear nuevo producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                @*BODY  MODAL*@
+                <div class="modal-body">
+                    
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" required />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" rows="4" class="form-control" placeholder="Escribe una descripción" required></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+
+                        <!-- Precio -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Price"
+                                   class="form-label">
+                                Precio
+                            </label>
+
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    RD$
+                                </span>
+
+                                <input type="number"
+                                       asp-for="Price"
+                                       id="createProductPrice"
+                                       name="Price"
+                                       class="form-control"
+                                       min="0.01"
+                                       step="0.01"
+                                       placeholder="0.00"
+                                       required>
+                            </div>
+                        </div>
+
+                        <!-- Existencia -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Stock" for="createProductStock"
+                                   class="form-label">
+                                Cantidad disponible
+                            </label>
+
+                            <input asp-for="Stock" type="number"
+                                   id="createProductStock"
+                                   name="Stock"
+                                   class="form-control"
+                                   min="0"
+                                   step="1"
+                                   value="0"
+                                   required>
+                        </div>
+
+                        <!-- Categoría -->
+                        <div class="mb-3">
+                            <label asp-for="Category.Id"
+                                   class="form-label">
+                                Categoría
+                            </label>
+
+                            @if (Model.Category?.Categories?.Any() == true)
+                            {
+                                <select asp-for="Category.Id"
+                                        asp-items="@(new SelectList(
+                                                    Model.Category.Categories,
+                                                    "Id",
+                                                    "Name"
+                                                ))"
+                                        class="form-select"
+                                        required>
+
+                                    <option value="">
+                                        Selecciona una categoría
+                                    </option>
+                                </select>
+                            }
+                            else
+                            {
+                                <select class="form-select" disabled>
+                                    <option>
+                                        No hay categorías disponibles
+                                    </option>
+                                </select>
+
+                                <div class="text-danger mt-1">
+                                    Primero debes registrar una categoría.
+                                </div>
+                            }
+
+                                @* @if(Model.Category.Categories.Count < 1)
+                                {
+                                    <option value="">
+                                        No hay categorias disponibles para seleccion
+                                    </option>
+                                } *@
+
+                            <span asp-validation-for="Category.Id"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+
+                        <button type="submit"
+                            class="btn btn-primary" @(Model.Category != null && Model.Category.Categories.Any() == false ? "disabled":"")>
+                            Crear producto
+                        </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>

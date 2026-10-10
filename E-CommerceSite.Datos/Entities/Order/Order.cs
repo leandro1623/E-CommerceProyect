@@ -1,21 +1,48 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using E_CommerceSite.Datos.Entities.OrderNameSpace;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-namespace E_CommerceSite.Datos.Order
+namespace E_CommerceSite.Datos.OrderNameSpace
 {
     public class Order
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
 
-        public DateTime OrderDate { get; set; }
+        [Required]
+        [StringLength(30)]
+        public string OrderNumber { get; set; } = string.Empty;
 
-        [Precision(18,2)]
-        public decimal Total { get; set; } = 50;
+        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
-        public string Status { get; set; } = "Completado";
+        [Precision(18, 2)]
+        public decimal Subtotal { get; set; }
+
+        [Precision(18, 2)]
+        public decimal Discount { get; set; }
+
+        [Precision(18, 2)]
+        public decimal Tax { get; set; }
+
+        [Precision(18, 2)]
+        public decimal Total { get; set; }
+
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
         public Guid CustomerId { get; set; }
 
-        public Customer.Customer? Customer { get; set; }
+        public Customer.Customer Customer { get; set; } = null!;
+
+        public ICollection<OrderItem> Items { get; set; }
+            = new List<OrderItem>();
+
+    }
+
+    public enum OrderStatus
+    {
+        Pending,
+        Processing,
+        Shipped,
+        Completed,
+        Cancelled
     }
 }

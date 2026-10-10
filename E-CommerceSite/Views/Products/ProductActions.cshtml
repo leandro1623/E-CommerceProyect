@@ -1,0 +1,33 @@
+﻿@model ProductViewModel
+@using System.Globalization
+
+<div class="d-flex gap-2 flex-wrap product-actions"
+     data-product-id="@Model.Id"
+     data-product-name="@Model.Name"
+     data-product-description="@Model.Description"
+     data-product-price="@Model.Price.ToString("0.00", CultureInfo.InvariantCulture)"
+     data-product-stock="@Model.Stock"
+     data-category-id="@(Model.Category?.Id.ToString() ?? "")"
+     data-category-name="@(Model.Category?.Name ?? "")">
+
+    <button type="button"
+            class="btn btn-sm btn-outline-info"
+            data-bs-toggle="modal"
+            data-bs-target="#productInfoModal">
+        Ver
+    </button>
+
+    <button type="button"
+            class="btn btn-sm btn-outline-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#editProductModal">
+        Editar
+    </button>
+
+    <button type="button"
+            class="btn btn-sm btn-outline-danger"
+            data-bs-toggle="modal"
+            data-bs-target="#productInfoModal">
+        Eliminar
+    </button>
+</div>

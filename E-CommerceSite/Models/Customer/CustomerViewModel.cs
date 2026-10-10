@@ -1,4 +1,5 @@
 ﻿using E_CommerceSite.Controllers;
+using E_CommerceSite.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace E_CommerceSite.Models
@@ -40,8 +41,8 @@ namespace E_CommerceSite.Models
         [Required]
         public bool AcceptTerms { get; set; }
 
-        public ICollection<OrderViewModel> Orders { get; set; }
-            = new List<OrderViewModel>();
+        public ICollection<OrderDetailsViewModel> Orders { get; set; }
+            = new List<OrderDetailsViewModel>();
 
         public List<CustomerViewModel> Customers { get; set; } = new List<CustomerViewModel>();
 

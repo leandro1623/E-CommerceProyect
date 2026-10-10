@@ -1,8 +1,41 @@
-﻿@model IEnumerable<E_CommerceSite.Models.CategoryViewModel>
+﻿@model CategoryViewModel
 
 @{
     ViewData["Title"] = "Categorías";
 }
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div id="deleteAlert"
+         class="alert alert-success alert-dismissible fade show"
+         role="alert">
+
+        <strong>¡Listo!</strong> @successMessage
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Cerrar">
+        </button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div id="deleteAlert"
+         class="alert alert-danger alert-dismissible fade show"
+         role="alert">
+
+        <strong>¡Error!</strong> @errorMessage
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Cerrar">
+        </button>
+    </div>
+}
+
 
 <div class="d-flex justify-content-between align-items-center mb-4">
 
@@ -14,10 +47,17 @@
         </p>
     </div>
 
-    <a asp-action="Create"
+    @* <a asp-action="Create"
        class="btn btn-primary">
         + Nueva categoría
-    </a>
+    </a> *@
+
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#createCategoryModal">
+        + Nueva categoría
+    </button>
 
 </div>
 
@@ -45,7 +85,7 @@
 
                 <tbody>
 
-                    @foreach (var category in Model)
+                    @foreach (var category in Model.Categories)
                     {
                         <tr>
                             <td>
@@ -63,23 +103,35 @@
                             <td>
                                 <div class="d-flex justify-content-center gap-1">
 
-                                    <a asp-action="Details"
-                                       asp-route-id="@category.Id"
-                                       class="btn btn-sm btn-outline-info">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-info"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#categoryInfoModal"
+                                            data-category-id="@category.Id"
+                                            data-category-name="@category.Name"
+                                            data-category-description="@category.Description">
                                         Ver
-                                    </a>
+                                    </button>
 
-                                    <a asp-action="Edit"
-                                       asp-route-id="@category.Id"
-                                       class="btn btn-sm btn-outline-primary">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editCategoryModal"
+                                            data-category-id="@category.Id"
+                                            data-category-name="@category.Name"
+                                            data-category-description="@category.Description">
                                         Editar
-                                    </a>
+                                    </button>
 
-                                    <a asp-action="Delete"
-                                       asp-route-id="@category.Id"
-                                       class="btn btn-sm btn-outline-danger">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#categoryInfoModal"
+                                            data-category-id="@category.Id"
+                                            data-category-name="@category.Name"
+                                            data-category-description="@category.Description">
                                         Eliminar
-                                    </a>
+                                    </button>
 
                                 </div>
                             </td>
@@ -91,7 +143,8 @@
             </table>
 
         </div>
-
+        <partial name="CreateCategoryModal" model="Model" />
+        <partial name="CategoryModals" modal="Model" />
     </div>
 
 </div>
@@ -147,6 +200,233 @@
                     }
                 }
             });
+
+            //Create category model
+            const modal =
+                document.getElementById("createCategoryModal");
+
+            const form =
+                document.getElementById("createCategoryForm");
+
+            modal.addEventListener("hidden.bs.modal", function() {
+                form.reset();
+            });
+           
+
+            //CategoryModals
+              (() => {
+            "use strict";
+
+            function initializeCategoryModals() {
+                const infoElement =
+                    document.getElementById("categoryInfoModal");
+
+                const editElement =
+                    document.getElementById("editCategoryModal");
+
+                const confirmationElement =
+                    document.getElementById("confirmDeleteCategoryModal");
+
+                if (!infoElement || !editElement || !confirmationElement) {
+                    return;
+                }
+
+                // Evitar registrar los eventos más de una vez.
+                if (infoElement.dataset.categoryModalsInitialized === "true") {
+                    return;
+                }
+
+                infoElement.dataset.categoryModalsInitialized = "true";
+
+                const infoModal =
+                    bootstrap.Modal.getOrCreateInstance(infoElement);
+
+                const confirmationModal =
+                    bootstrap.Modal.getOrCreateInstance(confirmationElement);
+
+                const editForm =
+                    document.getElementById("editCategoryForm");
+
+                const deleteForm =
+                    document.getElementById("deleteCategoryForm");
+
+                const deleteId =
+                    document.getElementById("deleteCategoryId");
+
+                const deleteSubmit =
+                    document.getElementById("confirmDeleteCategorySubmit");
+
+                let selectedCategory = null;
+                let openConfirmationAfterHide = false;
+                let deleteSubmitted = false;
+
+                function readCategory(button) {
+                    if (!button || !button.dataset.categoryId) {
+                        return null;
+                    }
+
+                    return {
+                        id: button.dataset.categoryId,
+                        name: button.dataset.categoryName || "",
+                        description:
+                            button.dataset.categoryDescription || ""
+                    };
+                }
+
+                // Cargar la información de la categoría seleccionada.
+                infoElement.addEventListener("show.bs.modal", function (event) {
+                    const category = readCategory(event.relatedTarget);
+
+                    // Al regresar desde la confirmación se conserva la selección.
+                    if (category) {
+                        selectedCategory = category;
+                    }
+
+                    if (!selectedCategory) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    // document.getElementById("categoryInfoId").textContent =
+                    //     selectedCategory.id;
+
+                    document.getElementById("categoryInfoName").textContent =
+                        selectedCategory.name;
+
+                    document.getElementById("categoryInfoDescription").textContent =
+                        selectedCategory.description.trim()
+                            ? selectedCategory.description
+                            : "Sin descripción.";
+                });
+
+                // Cerrar información para abrir la confirmación.
+                document.getElementById("openDeleteCategoryConfirmation")
+                    .addEventListener("click", function () {
+                        if (!selectedCategory || openConfirmationAfterHide) {
+                            return;
+                        }
+
+                        openConfirmationAfterHide = true;
+                        infoModal.hide();
+                    });
+
+                // Si se pulsó durante la apertura, esperar a que termine.
+                infoElement.addEventListener("shown.bs.modal", function () {
+                    if (openConfirmationAfterHide) {
+                        infoModal.hide();
+                    }
+                });
+
+                // Abrir la confirmación después del cierre completo.
+                infoElement.addEventListener("hidden.bs.modal", function () {
+                    if (!openConfirmationAfterHide) {
+                        return;
+                    }
+
+                    openConfirmationAfterHide = false;
+                    confirmationModal.show();
+                });
+
+                // Preparar el formulario de eliminación.
+                confirmationElement.addEventListener(
+                    "show.bs.modal",
+                    function (event) {
+                        if (!selectedCategory) {
+                            event.preventDefault();
+                            return;
+                        }
+
+                        deleteId.value = selectedCategory.id;
+
+                        document.getElementById("categoryDeleteName").textContent =
+                            selectedCategory.name;
+
+                        deleteSubmitted = false;
+                        deleteSubmit.disabled = false;
+                    }
+                );
+
+                // Cancelar, cerrar o presionar Escape devuelve a información.
+                confirmationElement.addEventListener(
+                    "hidden.bs.modal",
+                    function () {
+                        if (!deleteSubmitted && selectedCategory) {
+                            infoModal.show();
+                        }
+                    }
+                );
+
+                // Cargar los campos del formulario de edición.
+                editElement.addEventListener("show.bs.modal", function (event) {
+                    const category = readCategory(event.relatedTarget);
+
+                    if (!category) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    editForm.reset();
+
+                    const validator = window.jQuery
+                        ? window.jQuery(editForm).data("validator")
+                        : null;
+
+                    if (validator) {
+                        validator.resetForm();
+                    }
+
+                    editForm.querySelectorAll(
+                        ".input-validation-error, .is-invalid"
+                    ).forEach(function (field) {
+                        field.classList.remove(
+                            "input-validation-error",
+                            "is-invalid"
+                        );
+                    });
+
+                    editForm.querySelectorAll("[data-valmsg-for]")
+                        .forEach(function (message) {
+                            message.textContent = "";
+                            message.classList.remove("field-validation-error");
+                            message.classList.add("field-validation-valid");
+                        });
+
+                    document.getElementById("editCategoryId").value =
+                        category.id;
+
+                    document.getElementById("editCategoryName").value =
+                        category.name;
+
+                    document.getElementById("editCategoryDescription").value =
+                        category.description;
+                });
+
+                // Permitir un único envío del formulario de eliminación.
+                deleteForm.addEventListener("submit", function (event) {
+                    if (event.defaultPrevented) {
+                        return;
+                    }
+
+                    if (!deleteId.value || deleteSubmitted) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    deleteSubmitted = true;
+                    deleteSubmit.disabled = true;
+                });
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener(
+                    "DOMContentLoaded",
+                    initializeCategoryModals,
+                    { once: true }
+                );
+            } else {
+                initializeCategoryModals();
+            }
+        })();
 
         });
     </script>

@@ -1,0 +1,164 @@
+﻿@model CategoryViewModel
+
+<!-- Información: los botones Ver y Eliminar de la tabla abren este modal. -->
+<div class="modal fade"
+     id="categoryInfoModal"
+     tabindex="-1"
+     aria-labelledby="categoryInfoModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryInfoModalLabel">
+                    Información de la categoría
+                </h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <dl class="mb-0">
+                    @* <dt>Identificador</dt>
+                    <dd id="categoryInfoId" class="font-monospace small text-break"></dd> *@
+
+                    <dt>Nombre</dt>
+                    <dd id="categoryInfoName" class="text-break"></dd>
+
+                    <dt>Descripción</dt>
+                    <dd id="categoryInfoDescription"
+                        class="mb-0 text-break"
+                        style="white-space: pre-wrap;"></dd>
+                </dl>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+                <button type="button"
+                        id="openDeleteCategoryConfirmation"
+                        class="btn btn-danger">
+                    Eliminar categoría
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Editar: el formulario es modal-content para permitir el scroll interno. -->
+<div class="modal fade"
+     id="editCategoryModal"
+     tabindex="-1"
+     aria-labelledby="editCategoryModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <form asp-action="Edit"
+              asp-antiforgery="true"
+              method="post"
+              id="editCategoryForm"
+              class="modal-content">
+            <input asp-for="Id" type="hidden" id="editCategoryId" />
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCategoryModalLabel">
+                    Editar categoría
+                </h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label for="editCategoryName" class="form-label">Nombre</label>
+                    <input asp-for="Name"
+                           id="editCategoryName"
+                           class="form-control"
+                           maxlength="100"
+                           placeholder="Nombre de la categoría"
+                           required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-0">
+                    <label for="editCategoryDescription" class="form-label">Descripción</label>
+                    <textarea asp-for="Description"
+                              required
+                              id="editCategoryDescription"
+                              class="form-control"
+                              rows="4"
+                              maxlength="250"
+                              placeholder="Descripción de la categoría"
+                              style="height: 120px; resize: none; overflow-y: auto;"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Guardar cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Confirmar eliminación: cancelar o cerrar devuelve al modal de información. -->
+<div class="modal fade"
+     id="confirmDeleteCategoryModal"
+     tabindex="-1"
+     aria-labelledby="confirmDeleteCategoryModalLabel"
+     aria-describedby="confirmDeleteCategoryDescription"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <form asp-action="Delete"
+              asp-antiforgery="true"
+              method="post"
+              id="deleteCategoryForm"
+              class="modal-content">
+            <input asp-for="Id" type="hidden" id="deleteCategoryId" />
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteCategoryModalLabel">
+                    Confirmar eliminación
+                </h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cancelar y volver a la información"></button>
+            </div>
+
+            <div class="modal-body" id="confirmDeleteCategoryDescription">
+                <p class="mb-0">
+                    ¿Deseas eliminar la categoría
+                    <strong id="categoryDeleteName" class="text-break"></strong>?
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        id="confirmDeleteCategorySubmit"
+                        class="btn btn-danger">
+                    Confirmar eliminación
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

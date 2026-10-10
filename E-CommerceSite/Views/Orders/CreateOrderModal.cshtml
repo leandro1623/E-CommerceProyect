@@ -1,0 +1,172 @@
+﻿@model OrderDetailsViewModel
+
+<div class="modal fade"
+     id="createOrderModal"
+     tabindex="-1"
+     aria-labelledby="createOrderModalLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form asp-action="Create"
+                  method="post"
+                  id="createOrderForm">
+
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createOrderModalLabel">
+                        Crear nuevo pedido
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <!-- Cliente -->
+                    <div class="mb-4">
+                        <label asp-for="Customers.Id" class="form-label">
+                            Cliente
+                        </label>
+
+                        <select asp-for="Customers.Id"
+                                class="form-select"
+                                id="createOrderCustomer"
+                                required>
+
+                            <option value="">
+                                Selecciona un cliente
+                            </option>
+
+                            @foreach (var customer in Model.Customers.Customers)
+                            {
+                                <option value="@customer.Id">
+                                    @customer.Name
+                                </option>
+                            }
+                        </select>
+
+                        <span asp-validation-for="Customers.Id"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <h6 class="mb-3">Productos disponibles</h6>
+
+                    <div class="table-responsive">
+                        <div id="selectedOrderProductsInputs"></div> @* Contenedor para almacenar temporalmente las selecciones *@
+
+                        <table class="table table-bordered align-middle" id="createOrderProductsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 60px;"></th>
+                                    <th>Producto</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-center">Disponibles</th>
+                                    <th style="width: 140px;">Cantidad</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var product in Model.Products.Products)
+                                {
+                                    <tr>
+                                        <td class="text-center">
+                                            <input type="checkbox"
+                                                   class="form-check-input order-product-selector"
+                                                   data-product-id="@product.Id"
+                                                   data-price="@product.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                   data-stock="@product.Stock">
+                                        </td>
+
+                                        <td>
+                                            @product.Name
+                                        </td>
+
+                                        <td class="text-end">
+                                            RD$ @product.Price.ToString("N2")
+                                        </td>
+
+                                        <td class="text-center">
+                                            @product.Stock
+                                        </td>
+
+                                        <td>
+                                            <input type="number"
+                                                   class="form-control order-product-quantity"
+                                                   min="1"
+                                                   max="@product.Stock"
+                                                   value="1"
+                                                   disabled>
+                                        </td>
+
+                                        <td class="text-end fw-semibold order-product-subtotal">
+                                            RD$ 0.00
+                                        </td>
+                                    </tr>
+                                }
+
+                                @* @if (Model.Products.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="6"
+                                            class="text-center text-muted">
+                                            No hay productos disponibles.
+                                        </td>
+                                    </tr>
+                                } *@
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="createOrderProductError"
+                         class="text-danger d-none">
+                        Debes seleccionar al menos un producto.
+                    </div>
+
+                    <div class="row justify-content-end mt-4">
+                        <div class="col-md-5">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between fs-5">
+                                        <strong>Total del pedido:</strong>
+
+                                        <strong id="createOrderTotal"
+                                                class="text-primary">
+                                            RD$ 0.00
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            id="createOrderSubmit"
+                            class="btn btn-primary">
+                        Crear pedido
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>

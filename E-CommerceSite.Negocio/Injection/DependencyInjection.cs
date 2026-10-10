@@ -35,6 +35,9 @@ namespace E_CommerceSite.Negocio.Injection
             services.AddTransient<IManageUser, ManagerUser>();
             services.AddTransient<ISignInManager, ManageSignIn>();
             services.AddTransient<ICanHandleCustomers, CanHandleCustomers>();
+            services.AddTransient<IICanHandleProducts, ICanHandleProducts>();
+            services.AddTransient<IICanHandleCategories, ICanHandleCategories>();
+            services.AddTransient<IICanHandleOrders, ICanHandleOrders>();
 
             return services;
         }

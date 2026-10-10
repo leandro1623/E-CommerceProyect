@@ -1,5 +1,6 @@
 ﻿using E_CommerceSite.DATA;
 using E_CommerceSite.Datos.Customer;
+using E_CommerceSite.Datos.OrderNameSpace;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace E_CommerceSite.Negocio.Services
         Task<int> Delete(Guid id, string currentSignedUser);
         Task<int> EditUser(Guid userId, string fullName, string email, string phone, string address);
         Task<List<Customer>> GetCustomers();
+        Task<int> GetTotalCount();
     }
 
     public class CanHandleCustomers : ICanHandleCustomers
@@ -79,8 +81,18 @@ namespace E_CommerceSite.Negocio.Services
                 return 0;
             }
 
-            if (signInManager.GetSignInManager().IsSignedIn(signInManager.GetSignInManager().Context.User) == true) await signInManager.GetSignInManager().SignOutAsync();//si el usuario que esta logueado es el mismo que se esta eliminando se desloguea al usuario
+            // validamos si tiene ordenes pendientes o en proceso para no eliminarlo
+            var hasOrders = await applicationDbContext.Orders.Where(o => o.CustomerId == customer.Id && o.Status != OrderStatus.Processing && o.Status == OrderStatus.Pending).FirstOrDefaultAsync();
 
+            if(hasOrders != null)
+            {
+                return -3;
+            }
+
+            //si el usuario que esta logueado es el mismo que se esta eliminando se desloguea al usuario TODO: probar
+            if (signInManager.GetSignInManager().IsSignedIn(signInManager.GetSignInManager().Context.User) == true) await signInManager.GetSignInManager().SignOutAsync();
+
+            //eliminamos
             applicationDbContext.Customer.Remove(customer);
             return await applicationDbContext.SaveChangesAsync();
         }
@@ -99,8 +111,24 @@ namespace E_CommerceSite.Negocio.Services
                 return -1; // -1 Significa que se esta intentando eliminar el mismo usuario logueado
             }
 
+
+            // validamos si tiene ordenes pendientes o en proceso para no eliminarlo
+            var hasOrders = await applicationDbContext.Orders.
+                Where(o => o.CustomerId == customer.Id && o.Status != OrderStatus.Processing || o.Status == OrderStatus.Pending).FirstOrDefaultAsync();
+
+            if (hasOrders != null)
+            {   
+                return -3;
+            }
+
+            //eliminamos
             applicationDbContext.Customer.Remove(customer);
             return await applicationDbContext.SaveChangesAsync();
+        }
+
+        public async Task<int> GetTotalCount()
+        {
+            return await applicationDbContext.Customer.CountAsync();
         }
     }
 }

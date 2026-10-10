@@ -1,5 +1,25 @@
-﻿@{
+﻿@using System.Text.Json
+@using E_CommerceSite.Models.Index
+@model HomeIndexViewModel
+
+@{
     ViewData["Title"] = "Panel principal";
+
+    string salesLabelsJson = JsonSerializer.Serialize(
+        Model.MonthlySales.Select(sale => sale.Label)
+    );
+
+    string salesValuesJson = JsonSerializer.Serialize(
+        Model.MonthlySales.Select(sale => sale.Total)
+    );
+
+    string orderStatusLabelsJson = JsonSerializer.Serialize(
+        Model.OrdersByStatus.Select(order => order.Status)
+    );
+
+    string orderStatusValuesJson = JsonSerializer.Serialize(
+        Model.OrdersByStatus.Select(order => order.Quantity)
+    );
 }
 
 <div class="container-fluid">
@@ -10,8 +30,13 @@
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <p class="text-muted mb-2">Productos</p>
-                    <h2 class="fw-bold mb-0">120</h2>
+                    <p class="text-muted mb-2">
+                        Productos
+                    </p>
+
+                    <h2 class="fw-bold mb-0">
+                        @Model.TotalProducts.ToString("N0")
+                    </h2>
                 </div>
             </div>
         </div>
@@ -19,8 +44,13 @@
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <p class="text-muted mb-2">Clientes</p>
-                    <h2 class="fw-bold mb-0">85</h2>
+                    <p class="text-muted mb-2">
+                        Clientes
+                    </p>
+
+                    <h2 class="fw-bold mb-0">
+                        @Model.TotalCustomers.ToString("N0")
+                    </h2>
                 </div>
             </div>
         </div>
@@ -28,8 +58,13 @@
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <p class="text-muted mb-2">Pedidos</p>
-                    <h2 class="fw-bold mb-0">48</h2>
+                    <p class="text-muted mb-2">
+                        Pedidos
+                    </p>
+
+                    <h2 class="fw-bold mb-0">
+                        @Model.TotalOrders.ToString("N0")
+                    </h2>
                 </div>
             </div>
         </div>
@@ -37,8 +72,13 @@
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <p class="text-muted mb-2">Ventas totales</p>
-                    <h2 class="fw-bold mb-0">RD$125,000</h2>
+                    <p class="text-muted mb-2">
+                        Ventas totales
+                    </p>
+
+                    <h2 class="fw-bold mb-0 text-primary">
+                        RD$ @Model.TotalSales.ToString("N2")
+                    </h2>
                 </div>
             </div>
         </div>
@@ -48,27 +88,54 @@
     <!-- Gráficos -->
     <div class="row g-4">
 
+        <!-- Ventas mensuales -->
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm h-100">
+
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Ventas mensuales</h5>
+                    <h5 class="mb-0">
+                        Ventas de los últimos 6 meses
+                    </h5>
                 </div>
 
                 <div class="card-body">
-                    <canvas id="salesChart"></canvas>
+                    <div style="height: 350px;">
+                        <canvas id="salesChart"></canvas>
+                    </div>
                 </div>
+
             </div>
         </div>
 
+        <!-- Pedidos por estado -->
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
+
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Pedidos por estado</h5>
+                    <h5 class="mb-0">
+                        Pedidos por estado
+                    </h5>
                 </div>
 
                 <div class="card-body">
-                    <canvas id="ordersChart"></canvas>
+
+                    @if (Model.OrdersByStatus.Count > 0)
+                    {
+                        <div style="height: 350px;">
+                            <canvas id="ordersChart"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="h-100 d-flex align-items-center justify-content-center">
+                            <p class="text-muted mb-0">
+                                No hay pedidos registrados.
+                            </p>
+                        </div>
+                    }
+
                 </div>
+
             </div>
         </div>
 
@@ -77,35 +144,35 @@
 </div>
 
 @section Scripts {
+
     <script>
-        // Gráfico de ventas
-        const salesCanvas = document.getElementById("salesChart");
+        const salesLabels =
+            @Html.Raw(salesLabelsJson);
+
+        const salesValues =
+            @Html.Raw(salesValuesJson);
+
+        const orderStatusLabels =
+            @Html.Raw(orderStatusLabelsJson);
+
+        const orderStatusValues =
+            @Html.Raw(orderStatusValuesJson);
+
+        /*
+         * Gráfico de ventas mensuales.
+         */
+        const salesCanvas =
+            document.getElementById("salesChart");
 
         new Chart(salesCanvas, {
             type: "line",
 
             data: {
-                labels: [
-                    "Enero",
-                    "Febrero",
-                    "Marzo",
-                    "Abril",
-                    "Mayo",
-                    "Junio"
-                ],
+                labels: salesLabels,
 
                 datasets: [{
                     label: "Ventas en RD$",
-
-                    data: [
-                        15000,
-                        22000,
-                        18000,
-                        31000,
-                        27000,
-                        36000
-                    ],
-
+                    data: salesValues,
                     borderColor: "#0d6efd",
                     backgroundColor: "rgba(13, 110, 253, 0.15)",
                     borderWidth: 3,
@@ -118,44 +185,109 @@
                 responsive: true,
                 maintainAspectRatio: false,
 
+                interaction: {
+                    intersect: false,
+                    mode: "index"
+                },
+
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+
+                        ticks: {
+                            callback: function (value) {
+                                return "RD$ " +
+                                    Number(value).toLocaleString("es-DO");
+                            }
+                        }
+                    }
+                },
+
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const value = Number(context.raw);
+
+                                return "Ventas: RD$ " +
+                                    value.toLocaleString("es-DO", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    });
+                            }
+                        }
                     }
                 }
             }
         });
 
-        // Gráfico de pedidos
-        const ordersCanvas = document.getElementById("ordersChart");
+        /*
+         * Devuelve un color dependiendo del estado.
+         */
+        function getOrderStatusColor(status) {
+            const normalizedStatus =
+                status.toLowerCase().trim();
 
-        new Chart(ordersCanvas, {
-            type: "doughnut",
+            switch (normalizedStatus) {
+                case "completado":
+                case "completados":
+                case "completed":
+                    return "#198754";
 
-            data: {
-                labels: [
-                    "Completados",
-                    "Pendientes",
-                    "Cancelados"
-                ],
+                case "pendiente":
+                case "pendientes":
+                case "pending":
+                    return "#ffc107";
 
-                datasets: [{
-                    data: [30, 12, 6],
+                case "cancelado":
+                case "cancelados":
+                case "cancelled":
+                case "canceled":
+                    return "#dc3545";
 
-                    backgroundColor: [
-                        "#198754",
-                        "#ffc107",
-                        "#dc3545"
-                    ],
+                case "procesando":
+                case "processing":
+                    return "#0d6efd";
 
-                    borderWidth: 0
-                }]
-            },
-
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
+                default:
+                    return "#6c757d";
             }
-        });
+        }
+
+        /*
+         * Gráfico de pedidos por estado.
+         */
+        const ordersCanvas =
+            document.getElementById("ordersChart");
+
+        if (ordersCanvas) {
+            const orderStatusColors =
+                orderStatusLabels.map(getOrderStatusColor);
+
+            new Chart(ordersCanvas, {
+                type: "doughnut",
+
+                data: {
+                    labels: orderStatusLabels,
+
+                    datasets: [{
+                        data: orderStatusValues,
+                        backgroundColor: orderStatusColors,
+                        borderWidth: 0
+                    }]
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    plugins: {
+                        legend: {
+                            position: "bottom"
+                        }
+                    }
+                }
+            });
+        }
     </script>
 }

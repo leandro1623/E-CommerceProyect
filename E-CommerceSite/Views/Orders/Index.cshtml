@@ -1,7 +1,41 @@
-﻿@model IEnumerable<E_CommerceSite.Models.OrderViewModel>
+﻿@using E_CommerceSite.Datos.OrderNameSpace
+@model OrderDetailsViewModel
+
 
 @{
     ViewData["Title"] = "Pedidos";
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div id="deleteAlert"
+         class="alert alert-success alert-dismissible fade show"
+         role="alert">
+
+        <strong>¡Listo!</strong> @successMessage
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Cerrar">
+        </button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div id="deleteAlert"
+         class="alert alert-danger alert-dismissible fade show"
+         role="alert">
+
+        <strong>¡Error!</strong> @errorMessage
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Cerrar">
+        </button>
+    </div>
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -14,10 +48,16 @@
         </p>
     </div>
 
-    <a asp-action="Create"
+    @* <a asp-action="Create"
        class="btn btn-primary">
         + Nuevo pedido
-    </a>
+    </a> *@
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#createOrderModal">
+        + Nuevo pedido
+    </button>
 
 </div>
 
@@ -31,7 +71,7 @@
                 <p class="text-muted mb-2">Total de pedidos</p>
 
                 <h3 class="fw-bold mb-0">
-                    @Model.Count()
+                    @Model.OrderList.Count()
                 </h3>
             </div>
         </div>
@@ -43,7 +83,7 @@
                 <p class="text-muted mb-2">Pendientes</p>
 
                 <h3 class="fw-bold text-warning mb-0">
-                    @Model.Count(order => order.Status == "Pendiente")
+                    @Model.OrderList.Count(order => order.Status == OrderStatus.Pending)
                 </h3>
             </div>
         </div>
@@ -55,7 +95,7 @@
                 <p class="text-muted mb-2">Completados</p>
 
                 <h3 class="fw-bold text-success mb-0">
-                    @Model.Count(order => order.Status == "Completado")
+                    @Model.OrderList.Count(order => order.Status == OrderStatus.Completed)
                 </h3>
             </div>
         </div>
@@ -67,7 +107,7 @@
                 <p class="text-muted mb-2">Ingresos</p>
 
                 <h3 class="fw-bold text-primary mb-0">
-                    RD$ @Model.Where(order => order.Status == "Completado").Sum(order => order.Total).ToString("N2")
+                    RD$ @Model.OrderList.Where(order => order.Status == OrderStatus.Completed).Sum(order => order.Total).ToString("N2")
                 </h3>
             </div>
         </div>
@@ -103,7 +143,7 @@
 
                 <tbody>
 
-                    @foreach (var order in Model)
+                    @foreach (var order in Model.OrderList)
                     {
                         <tr>
                             <td class="fw-semibold">
@@ -111,7 +151,7 @@
                             </td>
 
                             <td>
-                                @order.Customer?.Name
+                                @order.Customers.Name
                             </td>
 
                             <td data-order="@order.OrderDate.ToString("yyyy-MM-dd HH:mm:ss")">
@@ -123,31 +163,31 @@
                             </td>
 
                             <td>
-                                @if (order.Status == "Pendiente")
+                                @if (order.Status == OrderStatus.Pending)
                                 {
                                     <span class="badge bg-warning text-dark">
                                         Pendiente
                                     </span>
                                 }
-                                else if (order.Status == "Procesando")
+                                else if (order.Status == OrderStatus.Processing)
                                 {
                                     <span class="badge bg-info text-dark">
                                         Procesando
                                     </span>
                                 }
-                                else if (order.Status == "Enviado")
+                                else if (order.Status == OrderStatus.Shipped)
                                 {
                                     <span class="badge bg-primary">
                                         Enviado
                                     </span>
                                 }
-                                else if (order.Status == "Completado")
+                                else if (order.Status == OrderStatus.Completed)
                                 {
                                     <span class="badge bg-success">
                                         Completado
                                     </span>
                                 }
-                                else if (order.Status == "Cancelado")
+                                else if (order.Status == OrderStatus.Cancelled)
                                 {
                                     <span class="badge bg-danger">
                                         Cancelado
@@ -184,6 +224,9 @@
                 </tbody>
 
             </table>
+
+            <partial name="DetailsModal" />
+            <partial name="CreateOrderModal" model="Model"/>
 
         </div>
 
@@ -239,6 +282,913 @@
                     }
                 }
             });
+
+
+
+            //Modal Ver
+            const modal =
+                document.getElementById("orderDetailsModal");
+
+            const loading =
+                document.getElementById("orderDetailsLoading");
+
+            const content =
+                document.getElementById("orderDetailsContent");
+
+            const error =
+                document.getElementById("orderDetailsError");
+
+            const productsBody =
+                document.getElementById("orderProductsBody");
+
+            const detailsUrl =
+                '@Url.Action("Details", "Orders")';
+
+            const moneyFormat = new Intl.NumberFormat(
+                "es-DO",
+                {
+                    style: "currency",
+                    currency: "DOP"
+                }
+            );
+
+            modal.addEventListener(
+                "show.bs.modal",
+                async function(event) {
+                    const button = event.relatedTarget;
+
+                    if (!button) {
+                        return;
+                    }
+
+                    const orderId = button.dataset.orderId;
+
+                    loading.classList.remove("d-none");
+                    content.classList.add("d-none");
+                    error.classList.add("d-none");
+                    productsBody.replaceChildren();
+
+                    try {
+                        const response = await fetch(
+                            `${detailsUrl}?id=${encodeURIComponent(orderId)}`
+                        );
+
+                        if (!response.ok) {
+                            throw new Error("No se pudo cargar el pedido.");
+                        }
+
+                        const order = await response.json();
+
+                        document.getElementById(
+                            "orderDetailsNumber"
+                        ).textContent = order.orderNumber;
+
+                        document.getElementById(
+                            "orderCustomerName"
+                        ).textContent = order.customerName;
+
+                        document.getElementById(
+                            "orderCustomerEmail"
+                        ).textContent = order.customerEmail;
+
+                        document.getElementById(
+                            "orderCustomerPhone"
+                        ).textContent =
+                            order.customerPhone || "No especificado";
+
+                        document.getElementById(
+                            "orderCustomerAddress"
+                        ).textContent =
+                            order.customerAddress || "No especificada";
+
+                        const orderDate = new Date(order.orderDate);
+
+                        document.getElementById(
+                            "orderDate"
+                        ).textContent = orderDate.toLocaleString("es-DO");
+
+                        configureStatus(order.status);
+
+                        document.getElementById(
+                            "orderSubtotal"
+                        ).textContent = moneyFormat.format(order.subtotal);
+
+                        document.getElementById(
+                            "orderTotal"
+                        ).textContent = moneyFormat.format(order.total);
+
+                        showProducts(order.products);
+
+                        loading.classList.add("d-none");
+                        content.classList.remove("d-none");
+                    }
+                    catch {
+                        loading.classList.add("d-none");
+                        error.classList.remove("d-none");
+                    }
+                }
+            );
+
+            function showProducts(products) {
+                productsBody.replaceChildren();
+
+                if (!products || products.length === 0) {
+                    const row = document.createElement("tr");
+                    const cell = document.createElement("td");
+
+                    cell.colSpan = 4;
+                    cell.className = "text-center text-muted";
+                    cell.textContent =
+                        "Este pedido no contiene productos.";
+
+                    row.appendChild(cell);
+                    productsBody.appendChild(row);
+
+                    return;
+                }
+
+                products.forEach(function(product) {
+                    const row = document.createElement("tr");
+
+                    addCell(row, product.name);
+
+                    addCell(
+                        row,
+                        moneyFormat.format(product.unitPrice),
+                        "text-end"
+                    );
+
+                    addCell(
+                        row,
+                        product.quantity,
+                        "text-center"
+                    );
+
+                    addCell(
+                        row,
+                        moneyFormat.format(product.subtotal),
+                        "text-end fw-semibold"
+                    );
+
+                    productsBody.appendChild(row);
+                });
+            }
+
+            function addCell(row, value, className = "") {
+                const cell = document.createElement("td");
+
+                cell.textContent = value;
+                cell.className = className;
+
+                row.appendChild(cell);
+            }
+
+            function configureStatus(statusValue) {
+                const status =
+                    document.getElementById("orderStatus");
+
+                const normalizedStatus =
+                    statusValue.toLowerCase();
+
+                const translations = {
+                    pending: "Pendiente",
+                    processing: "Procesando",
+                    shipped: "Enviado",
+                    completed: "Completado",
+                    cancelled: "Cancelado"
+                };
+
+                status.textContent =
+                    translations[normalizedStatus] || statusValue;
+
+                const statusClasses = {
+                    pending: "badge bg-warning text-dark",
+                    pendiente: "badge bg-warning text-dark",
+
+                    processing: "badge bg-primary",
+                    procesando: "badge bg-primary",
+
+                    shipped: "badge bg-info text-dark",
+                    enviado: "badge bg-info text-dark",
+
+                    completed: "badge bg-success",
+                    completado: "badge bg-success",
+
+                    cancelled: "badge bg-danger",
+                    cancelado: "badge bg-danger"
+                };
+
+                status.className =
+                    statusClasses[normalizedStatus]
+                    || "badge bg-secondary";
+            }
+
+
+            //create modal
+            const createOrderForm =
+                document.getElementById("createOrderForm");
+
+            const productsTableElement =
+                document.getElementById("createOrderProductsTable");
+
+            const hiddenInputsContainer =
+                document.getElementById("selectedOrderProductsInputs");
+
+            const productError =
+                document.getElementById("createOrderProductError");
+
+            const orderTotal =
+                document.getElementById("createOrderTotal");
+
+            const createOrderModal =
+                document.getElementById("createOrderModal");
+
+            if (!createOrderForm || !productsTableElement) {
+                return;
+            }
+
+            /*
+             * Guarda los productos seleccionados aunque el usuario
+             * cambie de página o realice una búsqueda en DataTables.
+             */
+            const selectedOrderProducts = new Map();
+
+            const createOrderMoneyFormat = new Intl.NumberFormat(
+                "es-DO",
+                {
+                    style: "currency",
+                    currency: "DOP"
+                }
+            );
+
+            /*
+             * Evita inicializar la misma tabla dos veces.
+             */
+            const productsDataTable =
+                $.fn.dataTable.isDataTable(productsTableElement)
+                    ? $(productsTableElement).DataTable()
+                    : $(productsTableElement).DataTable({
+                        pageLength: 5,
+
+                        lengthMenu: [5, 10, 25],
+
+                        order: [[1, "asc"]],
+
+                        columnDefs: [
+                            {
+                                targets: [0, 4, 5],
+                                orderable: false,
+                                searchable: false
+                            }
+                        ],
+
+                        language: {
+                            lengthMenu: "Mostrar _MENU_ productos",
+                            zeroRecords: "No se encontraron productos",
+                            info: "Mostrando _START_ a _END_ de _TOTAL_ productos",
+                            infoEmpty: "No hay productos disponibles",
+                            infoFiltered: "(filtrado de _MAX_ productos)",
+                            search: "Buscar:",
+                            paginate: {
+                                first: "Primero",
+                                previous: "Anterior",
+                                next: "Siguiente",
+                                last: "Último"
+                            }
+                        }
+                    });
+
+            /*
+             * Seleccionar o quitar un producto.
+             */
+            $(productsTableElement).on(
+                "change",
+                ".order-product-selector",
+                function () {
+                    const checkbox = this;
+                    const row = checkbox.closest("tr");
+
+                    const quantityInput =
+                        row.querySelector(".order-product-quantity");
+
+                    const productId =
+                        checkbox.dataset.productId;
+
+                    const price =
+                        Number(checkbox.dataset.price);
+
+                    const stock =
+                        Number(checkbox.dataset.stock);
+
+                    if (checkbox.checked) {
+                        if (stock <= 0) {
+                            checkbox.checked = false;
+
+                            productError.textContent =
+                                "Este producto no tiene existencia disponible.";
+
+                            productError.classList.remove("d-none");
+
+                            return;
+                        }
+
+                        quantityInput.disabled = false;
+                        quantityInput.value = 1;
+
+                        selectedOrderProducts.set(
+                            productId,
+                            {
+                                id: productId,
+                                price: price,
+                                stock: stock,
+                                quantity: 1
+                            }
+                        );
+                    }
+                    else {
+                        quantityInput.disabled = true;
+                        quantityInput.value = 1;
+
+                        selectedOrderProducts.delete(productId);
+                    }
+
+                    productError.classList.add("d-none");
+
+                    updateVisibleProductRow(row);
+                    updateCreateOrderTotal();
+                }
+            );
+
+            /*
+             * Actualizar cantidad seleccionada.
+             */
+            $(productsTableElement).on(
+                "input",
+                ".order-product-quantity",
+                function () {
+                    const quantityInput = this;
+                    const row = quantityInput.closest("tr");
+
+                    const checkbox =
+                        row.querySelector(".order-product-selector");
+
+                    if (!checkbox.checked) {
+                        return;
+                    }
+
+                    const productId =
+                        checkbox.dataset.productId;
+
+                    const selectedProduct =
+                        selectedOrderProducts.get(productId);
+
+                    if (!selectedProduct) {
+                        return;
+                    }
+
+                    selectedProduct.quantity =
+                        Number(quantityInput.value);
+
+                    productError.classList.add("d-none");
+
+                    updateVisibleProductRow(row);
+                    updateCreateOrderTotal();
+                }
+            );
+
+            /*
+             * Restaurar selecciones después de buscar,
+             * ordenar o cambiar de página.
+             */
+            $(productsTableElement).on(
+                "draw.dt",
+                function () {
+                    restoreVisibleProducts();
+                }
+            );
+
+            function restoreVisibleProducts() {
+                const visibleRows =
+                    productsTableElement.querySelectorAll("tbody tr");
+
+                visibleRows.forEach(function (row) {
+                    const checkbox =
+                        row.querySelector(".order-product-selector");
+
+                    if (!checkbox) {
+                        return;
+                    }
+
+                    const quantityInput =
+                        row.querySelector(".order-product-quantity");
+
+                    const productId =
+                        checkbox.dataset.productId;
+
+                    const selectedProduct =
+                        selectedOrderProducts.get(productId);
+
+                    if (selectedProduct) {
+                        checkbox.checked = true;
+                        quantityInput.disabled = false;
+                        quantityInput.value =
+                            selectedProduct.quantity;
+                    }
+                    else {
+                        checkbox.checked = false;
+                        quantityInput.disabled = true;
+                        quantityInput.value = 1;
+                    }
+
+                    updateVisibleProductRow(row);
+                });
+            }
+
+            function updateVisibleProductRow(row) {
+                const checkbox =
+                    row.querySelector(".order-product-selector");
+
+                const subtotalElement =
+                    row.querySelector(".order-product-subtotal");
+
+                if (!checkbox || !subtotalElement) {
+                    return;
+                }
+
+                const selectedProduct =
+                    selectedOrderProducts.get(
+                        checkbox.dataset.productId
+                    );
+
+                let subtotal = 0;
+
+                if (
+                    selectedProduct &&
+                    Number.isInteger(selectedProduct.quantity) &&
+                    selectedProduct.quantity >= 1 &&
+                    selectedProduct.quantity <= selectedProduct.stock
+                ) {
+                    subtotal =
+                        selectedProduct.price *
+                        selectedProduct.quantity;
+                }
+
+                subtotalElement.textContent =
+                    createOrderMoneyFormat.format(subtotal);
+            }
+
+            function updateCreateOrderTotal() {
+                let total = 0;
+
+                selectedOrderProducts.forEach(
+                    function (product) {
+                        if (
+                            Number.isInteger(product.quantity) &&
+                            product.quantity >= 1 &&
+                            product.quantity <= product.stock
+                        ) {
+                            total +=
+                                product.price *
+                                product.quantity;
+                        }
+                    }
+                );
+
+                orderTotal.textContent =
+                    createOrderMoneyFormat.format(total);
+            }
+
+            /*
+             * Preparar los campos que recibirá
+             * OrderDetailsViewModel en el POST.
+             */
+            createOrderForm.addEventListener(
+                "submit",
+                function (event) {
+                    productError.classList.add("d-none");
+
+                    if (selectedOrderProducts.size === 0) {
+                        event.preventDefault();
+
+                        productError.textContent =
+                            "Debes seleccionar al menos un producto.";
+
+                        productError.classList.remove("d-none");
+
+                        return;
+                    }
+
+                    const hasInvalidQuantity =
+                        Array.from(
+                            selectedOrderProducts.values()
+                        ).some(function (product) {
+                            return (
+                                !Number.isInteger(product.quantity) ||
+                                product.quantity < 1 ||
+                                product.quantity > product.stock
+                            );
+                        });
+
+                    if (hasInvalidQuantity) {
+                        event.preventDefault();
+
+                        productError.textContent =
+                            "Una cantidad es inválida o supera la existencia disponible.";
+
+                        productError.classList.remove("d-none");
+
+                        return;
+                    }
+
+                    hiddenInputsContainer.replaceChildren();
+
+                    let index = 0;
+
+                    selectedOrderProducts.forEach(
+                        function (product) {
+                            appendHiddenInput(
+                                `Products.Products[${index}].Id`,
+                                product.id
+                            );
+
+                            appendHiddenInput(
+                                `Products.Products[${index}].Quantity`,
+                                product.quantity
+                            );
+
+                            index++;
+                        }
+                    );
+                }
+            );
+
+            function appendHiddenInput(name, value) {
+                const input =
+                    document.createElement("input");
+
+                input.type = "hidden";
+                input.name = name;
+                input.value = value;
+
+                hiddenInputsContainer.appendChild(input);
+            }
+
+            /*
+             * Limpiar todo cuando se cierre el modal.
+             */
+            createOrderModal.addEventListener(
+                "hidden.bs.modal",
+                function () {
+                    selectedOrderProducts.clear();
+
+                    createOrderForm.reset();
+
+                    hiddenInputsContainer.replaceChildren();
+
+                    productError.classList.add("d-none");
+
+                    updateCreateOrderTotal();
+
+                    productsDataTable
+                        .search("")
+                        .page(0)
+                        .draw(false);
+                }
+            );
+
+        //     const createOrderForm =
+        //         document.getElementById("createOrderForm");
+            
+        //     const productsTableElement =
+        //         document.getElementById("createOrderProductsTable");
+            
+        //     const hiddenInputsContainer =
+        //         document.getElementById("selectedOrderProductsInputs");
+            
+        //     const productError =
+        //         document.getElementById("createOrderProductError");
+            
+        //     const orderTotal =
+        //         document.getElementById("createOrderTotal");
+            
+        //     const createOrderModal =
+        //         document.getElementById("createOrderModal");
+            
+        //     const selectedProducts = new Map();
+            
+        //     const moneyFormat = new Intl.NumberFormat(
+        //         "es-DO",
+        //         {
+        //             style: "currency",
+        //             currency: "DOP"
+        //         }
+        //     );
+            
+
+        //     Inicializar DataTable.
+        //     const productsDataTable =
+        //         $("#createOrderProductsTable").DataTable({
+        //             pageLength: 5,
+            
+        //             lengthMenu: [5, 10, 25],
+            
+        //             order: [[1, "asc"]],
+            
+        //             columnDefs: [
+        //                 {
+        //                     targets: [0, 4, 5],
+        //                     orderable: false,
+        //                     searchable: false
+        //                 }
+        //             ],
+            
+        //             language: {
+        //                 lengthMenu: "Mostrar _MENU_ productos",
+        //                 zeroRecords: "No se encontraron productos",
+        //                 info: "Mostrando _START_ a _END_ de _TOTAL_ productos",
+        //                 infoEmpty: "No hay productos disponibles",
+        //                 infoFiltered: "(filtrado de _MAX_ productos)",
+        //                 search: "Buscar:",
+        //                 paginate: {
+        //                     first: "Primero",
+        //                     previous: "Anterior",
+        //                     next: "Siguiente",
+        //                     last: "Último"
+        //                 }
+        //             }
+        //         });
+            
+        //     Detectar selección de productos.
+        //     Usamos delegación porque DataTables cambia las filas visibles.
+        //     $("#createOrderProductsTable tbody").on(
+        //         "change",
+        //         ".order-product-selector",
+        //         function () {
+        //             const checkbox = this;
+        //             const row = checkbox.closest("tr");
+            
+        //             const quantityInput =
+        //                 row.querySelector(".order-product-quantity");
+            
+        //             const productId =
+        //                 checkbox.dataset.productId;
+            
+        //             const price =
+        //                 Number(checkbox.dataset.price);
+            
+        //             const stock =
+        //                 Number(checkbox.dataset.stock);
+            
+        //             if (checkbox.checked) {
+        //                 quantityInput.disabled = false;
+        //                 quantityInput.value = 1;
+            
+        //                 selectedProducts.set(
+        //                     productId,
+        //                     {
+        //                         productId: productId,
+        //                         unitPrice: price,
+        //                         stock: stock,
+        //                         quantity: 1
+        //                     }
+        //                 );
+        //             }
+        //             else {
+        //                 quantityInput.disabled = true;
+        //                 quantityInput.value = 1;
+            
+        //                 selectedProducts.delete(productId);
+        //             }
+            
+        //             productError.classList.add("d-none");
+            
+        //             updateVisibleRow(row);
+        //             updateOrderTotal();
+        //         }
+        //     );
+            
+        //     Detectar cambios en la cantidad.
+        //     $("#createOrderProductsTable tbody").on(
+        //         "input",
+        //         ".order-product-quantity",
+        //         function () {
+        //             const quantityInput = this;
+        //             const row = quantityInput.closest("tr");
+            
+        //             const checkbox =
+        //                 row.querySelector(".order-product-selector");
+            
+        //             if (!checkbox.checked) {
+        //                 return;
+        //             }
+            
+        //             const productId =
+        //                 checkbox.dataset.productId;
+            
+        //             const quantity =
+        //                 Number(quantityInput.value);
+            
+        //             const selectedProduct =
+        //                 selectedProducts.get(productId);
+            
+        //             if (!selectedProduct) {
+        //                 return;
+        //             }
+            
+        //             if (
+        //                 Number.isInteger(quantity) &&
+        //                 quantity >= 1 &&
+        //                 quantity <= selectedProduct.stock
+        //             ) {
+        //                 selectedProduct.quantity = quantity;
+        //                 productError.classList.add("d-none");
+        //             }
+            
+        //             updateVisibleRow(row);
+        //             updateOrderTotal();
+        //         }
+        //     );
+
+        //     Restaurar checkbox y cantidades después de buscar,
+        //     ordenar o cambiar de página.
+        //     productsDataTable.on("draw.dt", function () {
+        //         restoreVisibleSelections();
+        //     });
+
+        //     function restoreVisibleSelections() {
+        //         const visibleRows =
+        //             productsTableElement.querySelectorAll("tbody tr");
+            
+        //         visibleRows.forEach(function (row) {
+        //             const checkbox =
+        //                 row.querySelector(".order-product-selector");
+            
+        //             if (!checkbox) {
+        //                 return;
+        //             }
+            
+        //             const quantityInput =
+        //                 row.querySelector(".order-product-quantity");
+            
+        //             const productId =
+        //                 checkbox.dataset.productId;
+            
+        //             const selectedProduct =
+        //                 selectedProducts.get(productId);
+            
+        //             if (selectedProduct) {
+        //                 checkbox.checked = true;
+            
+        //                 quantityInput.disabled = false;
+        //                 quantityInput.value =
+        //                     selectedProduct.quantity;
+        //             }
+        //             else {
+        //                 checkbox.checked = false;
+            
+        //                 quantityInput.disabled = true;
+        //                 quantityInput.value = 1;
+        //             }
+            
+        //             updateVisibleRow(row);
+        //         });
+        //     }
+            
+        //     function updateVisibleRow(row) {
+        //         const checkbox =
+        //             row.querySelector(".order-product-selector");
+            
+        //         const quantityInput =
+        //             row.querySelector(".order-product-quantity");
+            
+        //         const subtotalElement =
+        //             row.querySelector(".order-product-subtotal");
+            
+        //         if (!checkbox || !quantityInput || !subtotalElement) {
+        //             return;
+        //         }
+            
+        //         const product =
+        //             selectedProducts.get(
+        //                 checkbox.dataset.productId
+        //             );
+            
+        //         const subtotal = product
+        //             ? product.unitPrice * product.quantity
+        //             : 0;
+            
+        //         subtotalElement.textContent =
+        //             moneyFormat.format(subtotal);
+        //     }
+            
+        //     function updateOrderTotal() {
+        //         let total = 0;
+            
+        //         selectedProducts.forEach(function (product) {
+        //             total +=
+        //                 product.unitPrice * product.quantity;
+        //         });
+            
+        //         orderTotal.textContent =
+        //             moneyFormat.format(total);
+        //     }
+
+        //     createOrderForm.addEventListener(
+        //     "submit",
+        //     function (event) {
+        //         productError.classList.add("d-none");
+        
+        //         if (selectedProducts.size === 0) {
+        //             event.preventDefault();
+        
+        //             productError.textContent =
+        //                 "Debes seleccionar al menos un producto.";
+        
+        //             productError.classList.remove("d-none");
+        
+        //             return;
+        //         }
+        
+        //         let hasInvalidQuantity = false;
+        
+        //         selectedProducts.forEach(function (product) {
+        //             if (
+        //                 product.quantity < 1 ||
+        //                 product.quantity > product.stock
+        //             ) {
+        //                 hasInvalidQuantity = true;
+        //             }
+        //         });
+        
+        //         if (hasInvalidQuantity) {
+        //             event.preventDefault();
+        
+        //             productError.textContent =
+        //                 "Revisa las cantidades seleccionadas.";
+        
+        //             productError.classList.remove("d-none");
+        
+        //             return;
+        //         }
+        
+        //         Eliminar campos generados anteriormente.
+        //         hiddenInputsContainer.replaceChildren();
+        
+        //         let index = 0;
+        
+        //         selectedProducts.forEach(function (product) {
+        //             const productIdInput =
+        //                 document.createElement("input");
+        
+        //             productIdInput.type = "hidden";
+        //             productIdInput.name =
+        //                 `Products[${index}].ProductId`;
+        
+        //             productIdInput.value =
+        //                 product.productId;
+        
+        //             const quantityInput =
+        //                 document.createElement("input");
+        
+        //             quantityInput.type = "hidden";
+        //             quantityInput.name =
+        //                 `Products[${index}].Quantity`;
+        
+        //             quantityInput.value =
+        //                 product.quantity;
+        
+        //             hiddenInputsContainer.appendChild(
+        //                 productIdInput
+        //             );
+        
+        //             hiddenInputsContainer.appendChild(
+        //                 quantityInput
+        //             );
+        
+        //             index++;
+        //         });
+        //     }
+        // );
+
+        // createOrderModal.addEventListener(
+        //     "hidden.bs.modal",
+        //     function () {
+        //         selectedProducts.clear();
+        
+        //         createOrderForm.reset();
+        
+        //         hiddenInputsContainer.replaceChildren();
+        
+        //         productError.classList.add("d-none");
+        
+        //         updateOrderTotal();
+        
+        //         productsDataTable
+        //             .search("")
+        //             .page(0)
+        //             .draw(false);
+        //     }
+        // );
 
         });
     </script>

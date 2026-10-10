@@ -1,4 +1,5 @@
-﻿using E_CommerceSite.Models;
+﻿using E_CommerceSite.Datos.Customer;
+using E_CommerceSite.Models;
 using E_CommerceSite.Negocio.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
@@ -9,6 +10,7 @@ namespace E_CommerceSite.Controllers
 {
     public class CustomerController : Controller
     {
+        //TODO: probar eliminar un usuario con ordenes pendientes o en proceso aun no se prueba
         private readonly ICanHandleCustomers handleCustomers;
 
         public CustomerController(ICanHandleCustomers handleCustomers)
@@ -36,8 +38,11 @@ namespace E_CommerceSite.Controllers
                 Phone = c.UserEntity.PhoneNumber!,
                 CreatedAt = c.CreateDate,
                 IsActive = c.UserEntity.EmailConfirmed,
-                Orders = c.Orders.Select(o=> new OrderViewModel() { Customer = null, CustomerId = o.Customer!.Id, Id = o.Id,
-                OrderDate = o.OrderDate, Status = o.Status, Total = o.Total}).ToList(),
+                Orders = c.Orders.Select(o=> new OrderDetailsViewModel() { 
+                    Id = o.Id,
+                    OrderDate = o.OrderDate,
+                    Status = o.Status,
+                    Total = o.Total}).ToList()
             }).ToList();
 
             
@@ -78,7 +83,11 @@ namespace E_CommerceSite.Controllers
             {
                 TempData["ErrorMessage"] = "No puedes eliminar tu propio usuario mientras estás logueado.";
             }
-                        
+            else if (deleted == -3)
+            {
+                TempData["ErrorMessage"] = "No puedes eliminar al usuario mientras este tiene ordenes pendientes o en proceso.";
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -89,7 +98,7 @@ namespace E_CommerceSite.Controllers
 
             if (!ModelState.IsValid)
             {
-                return View(model); //TODO: tiene que crear un ViewModel para editar o anular la validacion de los campos que no son necesarios aca
+                return View(model);
             }
 
             int edited = await handleCustomers.EditUser(model.Id, model.Name, model.Email, model.Phone!, model.Address!);
