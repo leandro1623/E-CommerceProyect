@@ -14,6 +14,9 @@ namespace E_CommerceSite.Negocio.Services
         Task<int> Create(Order order);
         Task<List<Order>> GetAll();
         Task<List<Order>> GetAllAsNotTraking();
+        Task<Order?> GetById(Guid id);
+        Task<bool> ChangeStatus(Guid id, OrderStatus status);
+        Task<bool> Delete(Guid id);
         Task<List<MonthlySaleViewModel>> GetMonthlySales(int numberOfMonths);
         Task<List<OrderStatusSummaryViewModel>> GetOrdersByStatus();
         Task<int> GetTotalCount();
@@ -48,6 +51,50 @@ namespace E_CommerceSite.Negocio.Services
             dbContext.Orders.Add(order);
 
             return await dbContext.SaveChangesAsync();
+        }
+
+        public async Task<Order?> GetById(Guid id)
+        {
+            return await dbContext.Orders
+                .AsNoTracking()
+                .Include(order => order.Customer.UserEntity)
+                .Include(order => order.Items)
+                    .ThenInclude(item => item.Product)
+                .SingleOrDefaultAsync(order => order.Id == id);
+        }
+
+        public async Task<bool> ChangeStatus(Guid id, OrderStatus status)
+        {
+            if (!Enum.IsDefined(typeof(OrderStatus), status))
+            {
+                return false;
+            }
+
+            var order = await dbContext.Orders.FindAsync(id);
+            if (order == null)
+            {
+                return false;
+            }
+
+            order.Status = status;
+            await dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> Delete(Guid id)
+        {
+            var order = await dbContext.Orders
+                .Include(order => order.Items)
+                .SingleOrDefaultAsync(order => order.Id == id);
+
+            if (order == null)
+            {
+                return false;
+            }
+
+            dbContext.Orders.Remove(order);
+            await dbContext.SaveChangesAsync();
+            return true;
         }
 
 

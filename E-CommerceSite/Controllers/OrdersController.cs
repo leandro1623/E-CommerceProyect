@@ -78,10 +78,126 @@ namespace E_CommerceSite.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Details(Guid id)
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
+            var order = await handleOrders.GetById(id);
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            var model = new OrderDetailsViewModel
+            {
+                Id = order.Id,
+                OrderNumber = order.OrderNumber,
+                OrderDate = order.OrderDate,
+                Subtotal = order.Subtotal,
+                Discount = order.Discount,
+                Tax = order.Tax,
+                Total = order.Total,
+                Status = order.Status,
+                Customers = new CustomerViewModel
+                {
+                    Id = order.CustomerId,
+                    Name = order.Customer?.UserEntity?.Fullname ?? "Sin cliente",
+                    Email = order.Customer?.UserEntity?.Email ?? string.Empty,
+                    Phone = order.Customer?.UserEntity?.PhoneNumber,
+                    Address = order.Customer?.Address
+                },
+                Items = order.Items.Select(item => new OrderItemDetailsViewModel
+                {
+                    ProductId = item.ProductId,
+                    ProductName = string.IsNullOrWhiteSpace(item.ProductName)
+                        ? item.Product?.Name ?? "Producto no disponible"
+                        : item.ProductName,
+                    UnitPrice = item.UnitPrice,
+                    Quantity = item.Quantity
+                }).ToList()
+            };
+
+            // El JSON coincide con los campos que muestra DetailsModal.
+            return Json(new
+            {
+                model.Id,
+                model.OrderNumber,
+                model.OrderDate,
+                model.Subtotal,
+                model.Discount,
+                model.Tax,
+                model.Total,
+                Status = model.Status.ToString(),
+                CustomerName = model.Customers.Name,
+                CustomerEmail = model.Customers.Email,
+                CustomerPhone = model.Customers.Phone,
+                CustomerAddress = model.Customers.Address,
+                Products = model.Items.Select(item => new
+                {
+                    Name = item.ProductName,
+                    item.UnitPrice,
+                    item.Quantity,
+                    Subtotal = item.LineTotal
+                })
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Guid id, OrderStatus? status)
+        {
+            if (!ModelState.IsValid || id == Guid.Empty || !status.HasValue ||
+                !Enum.IsDefined(typeof(OrderStatus), status.Value))
+            {
+                TempData["ErrorMessage"] = "Selecciona un pedido y un estado válidos.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (await handleOrders.ChangeStatus(id, status.Value))
+            {
+                TempData["SuccessMessage"] = "Estado del pedido actualizado.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "No se encontró el pedido para actualizar su estado.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            if (!ModelState.IsValid || id == Guid.Empty)
+            {
+                TempData["ErrorMessage"] = "No se pudo obtener el identificador del pedido.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (await handleOrders.Delete(id))
+            {
+                TempData["SuccessMessage"] = "Pedido eliminado correctamente.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "No se encontró el pedido para eliminar.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(OrderDetailsViewModel model)
         {
 
-            //if (!ModelState.IsValid) Siempre sera falso por que en el modelo que se recibe no todos los campos tienen valores, se validaran los campos necesarios de manera manual
+            //if (!ModelState.IsValid) Siempre sera falso por que en el modelo que se recibe no todos los campos tienen valores,
+            //se validaran los campos necesarios de manera manual
             //{
             //    return View(model);
             //}
@@ -146,10 +262,7 @@ namespace E_CommerceSite.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Mientras Price sea double.
-                // Lo recomendable es cambiar Price a decimal.
-                decimal unitPrice =
-                    Convert.ToDecimal(databaseProduct.Price);
+                decimal unitPrice = databaseProduct.Price;
 
                 decimal itemSubtotal = decimal.Round(
                     unitPrice * selectedProduct.Quantity,
@@ -162,8 +275,10 @@ namespace E_CommerceSite.Controllers
                 {
                     Id = Guid.NewGuid(),
                     ProductId = databaseProduct.Id,
+                    ProductName = databaseProduct.Name,
                     Quantity = selectedProduct.Quantity,
                     UnitPrice = unitPrice,
+                    LineTotal = itemSubtotal,
                     Subtotal = itemSubtotal
                 });
             }
@@ -199,7 +314,7 @@ namespace E_CommerceSite.Controllers
 
             var result = await handleOrders.Create(order);
 
-            if(result > 0)
+            if (result > 0)
             {
                 TempData["SuccessMessage"] = "Pedido creado correctamente.";
             }

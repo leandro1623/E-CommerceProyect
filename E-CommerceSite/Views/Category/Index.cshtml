@@ -208,8 +208,15 @@
             const form =
                 document.getElementById("createCategoryForm");
 
+            const button = document.getElementById("createCategoryFormButtonSubmit");
+
             modal.addEventListener("hidden.bs.modal", function() {
                 form.reset();
+            });
+            
+            form.addEventListener("submit", function () {
+                button.disabled = true;
+                button.textContent = "Guardando...";
             });
            
 

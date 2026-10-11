@@ -1,11 +1,14 @@
 ﻿@model ProductViewModel
 
 
-
 <div id="CreateProductModalId" class="modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true" aria-labelledby="createProductModalLabel">
+
     <div class="modal-dialog modal-lg modal-dialog-centered">
+
         <div class="modal-content">
+
             <form asp-action="Create" method="post" id="createProductForm">
+
                 @Html.AntiForgeryToken()
 
                 @* HEADER *@
@@ -124,16 +127,16 @@
                 </div>
 
                 <div class="modal-footer">
-                        <button type="button"
-                                class="btn btn-secondary"
-                                data-bs-dismiss="modal">
-                            Cancelar
-                        </button>
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
 
-                        <button type="submit"
-                            class="btn btn-primary" @(Model.Category != null && Model.Category.Categories.Any() == false ? "disabled":"")>
-                            Crear producto
-                        </button>
+                    <button type="submit" id="createProductFormButtoSubmit"
+                        class="btn btn-primary" @(Model.Category != null && Model.Category.Categories.Any() == false ? "disabled":"")>
+                        Crear producto
+                    </button>
                 </div>
 
             </form>

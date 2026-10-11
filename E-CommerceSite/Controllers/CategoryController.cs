@@ -35,7 +35,7 @@ namespace E_CommerceSite.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CategoryViewModel model)
-        {
+            {
             
             if (!ModelState.IsValid || string.IsNullOrEmpty(model.Name) || string.IsNullOrEmpty(model.Description))
             {

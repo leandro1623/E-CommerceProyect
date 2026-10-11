@@ -1,0 +1,76 @@
+@using E_CommerceSite.Datos.OrderNameSpace
+
+<div class="modal fade" id="editOrderModal" tabindex="-1"
+     aria-labelledby="editOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <form asp-action="Edit" asp-antiforgery="true" method="post"
+              id="editOrderForm" class="modal-content">
+            <input type="hidden" name="Id" id="editOrderId" />
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="editOrderModalLabel">Cambiar estado del pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <p class="text-break"><strong>Pedido:</strong> <span id="editOrderNumber"></span></p>
+                <p class="text-break"><strong>Cliente:</strong> <span id="editOrderCustomer"></span></p>
+
+                <label for="editOrderStatus" class="form-label">Estado</label>
+                <select name="Status" id="editOrderStatus" class="form-select" required>
+                    <option value="">Selecciona un estado</option>
+                    @foreach (var status in Enum.GetValues<OrderStatus>())
+                    {
+                        var label = status switch
+                        {
+                            OrderStatus.Pending => "Pendiente",
+                            OrderStatus.Processing => "Procesando",
+                            OrderStatus.Shipped => "Enviado",
+                            OrderStatus.Completed => "Completado",
+                            OrderStatus.Cancelled => "Cancelado",
+                            _ => status.ToString()
+                        };
+                        <option value="@status">@label</option>
+                    }
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmDeleteOrderModal" tabindex="-1"
+     aria-labelledby="confirmDeleteOrderModalLabel"
+     aria-describedby="confirmDeleteOrderDescription" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <form asp-action="Delete" asp-antiforgery="true" method="post"
+              id="deleteOrderForm" class="modal-content">
+            <input type="hidden" name="Id" id="deleteOrderId" />
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteOrderModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Cancelar y volver al detalle"></button>
+            </div>
+
+            <div class="modal-body" id="confirmDeleteOrderDescription">
+                <p class="mb-0">
+                    ¿Deseas eliminar el pedido
+                    <strong id="orderDeleteNumber" class="text-break"></strong>?
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger" id="confirmDeleteOrderSubmit">
+                    Confirmar eliminación
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

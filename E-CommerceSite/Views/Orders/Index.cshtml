@@ -147,7 +147,7 @@
                     {
                         <tr>
                             <td class="fw-semibold">
-                                #@order.Id
+                                @(string.IsNullOrWhiteSpace(order.OrderNumber) ? order.Id.ToString() : order.OrderNumber)
                             </td>
 
                             <td>
@@ -202,21 +202,7 @@
                             </td>
 
                             <td>
-                                <div class="d-flex justify-content-center gap-1">
-
-                                    <a asp-action="Details"
-                                       asp-route-id="@order.Id"
-                                       class="btn btn-sm btn-outline-info">
-                                        Ver
-                                    </a>
-
-                                    <a asp-action="Edit"
-                                       asp-route-id="@order.Id"
-                                       class="btn btn-sm btn-outline-primary">
-                                        Cambiar estado
-                                    </a>
-
-                                </div>
+                                <partial name="OrderActions" model="order" />
                             </td>
                         </tr>
                     }
@@ -225,14 +211,15 @@
 
             </table>
 
-            <partial name="DetailsModal" />
-            <partial name="CreateOrderModal" model="Model"/>
-
         </div>
 
     </div>
 
 </div>
+
+<partial name="DetailsModal" />
+<partial name="OrderModals" />
+<partial name="CreateOrderModal" model="Model" />
 
 @section Scripts {
     <script>
@@ -285,109 +272,181 @@
 
 
 
-            //Modal Ver
-            const modal =
-                document.getElementById("orderDetailsModal");
+            // Detalle, cambio de estado y confirmación de eliminación.
+            const modal = document.getElementById("orderDetailsModal");
+            const loading = document.getElementById("orderDetailsLoading");
+            const content = document.getElementById("orderDetailsContent");
+            const error = document.getElementById("orderDetailsError");
+            const productsBody = document.getElementById("orderProductsBody");
+            const deleteButton = document.getElementById("openDeleteOrderConfirmation");
+            const editElement = document.getElementById("editOrderModal");
+            const confirmationElement = document.getElementById("confirmDeleteOrderModal");
+            const deleteForm = document.getElementById("deleteOrderForm");
+            const deleteSubmit = document.getElementById("confirmDeleteOrderSubmit");
 
-            const loading =
-                document.getElementById("orderDetailsLoading");
+            const infoModal = bootstrap.Modal.getOrCreateInstance(modal);
+            const confirmationModal = bootstrap.Modal.getOrCreateInstance(confirmationElement);
+            const detailsUrl = '@Url.Action("Details", "Orders")';
+            const moneyFormat = new Intl.NumberFormat("es-DO", {
+                style: "currency",
+                currency: "DOP"
+            });
 
-            const content =
-                document.getElementById("orderDetailsContent");
+            //Deshabilitamos el boton de crear cuando este ya ha sido precionado para evitar duplicados
+            const form = document.getElementById("createOrderForm");
+            const button = document.getElementById("createOrderSubmit");
+            
+            form.addEventListener("submit", function () {
+                button.disabled = true;
+                button.textContent = "Guardando...";
+            });
 
-            const error =
-                document.getElementById("orderDetailsError");
 
-            const productsBody =
-                document.getElementById("orderProductsBody");
 
-            const detailsUrl =
-                '@Url.Action("Details", "Orders")';
+            let selectedOrder = null;
+            let detailsRequest = null;
+            let openConfirmationAfterHide = false;
+            let deleteSubmitted = false;
 
-            const moneyFormat = new Intl.NumberFormat(
-                "es-DO",
-                {
-                    style: "currency",
-                    currency: "DOP"
+            function readOrder(button) {
+                const source = button?.closest(".order-actions");
+                if (!source?.dataset.orderId) return null;
+
+                return {
+                    id: source.dataset.orderId,
+                    orderNumber: source.dataset.orderNumber || source.dataset.orderId,
+                    status: source.dataset.orderStatus || "",
+                    customerName: source.dataset.customerName || "Sin cliente"
+                };
+            }
+
+            modal.addEventListener("show.bs.modal", async function(event) {
+                const order = readOrder(event.relatedTarget);
+
+                // Al volver desde la confirmación se conserva el detalle cargado.
+                if (!order) {
+                    if (!selectedOrder) event.preventDefault();
+                    return;
                 }
-            );
 
-            modal.addEventListener(
-                "show.bs.modal",
-                async function(event) {
-                    const button = event.relatedTarget;
+                selectedOrder = order;
+                detailsRequest?.abort();
+                const request = new AbortController();
+                detailsRequest = request;
 
-                    if (!button) {
-                        return;
-                    }
+                document.getElementById("orderDetailsNumber").textContent = order.orderNumber;
+                loading.classList.remove("d-none");
+                content.classList.add("d-none");
+                error.classList.add("d-none");
+                productsBody.replaceChildren();
+                deleteButton.disabled = true;
 
-                    const orderId = button.dataset.orderId;
+                try {
+                    const url = new URL(detailsUrl, window.location.href);
+                    url.searchParams.set("id", order.id);
+                    const response = await fetch(url, {
+                        signal: request.signal,
+                        headers: { Accept: "application/json" }
+                    });
+                    if (!response.ok) throw new Error("No se pudo cargar el pedido.");
 
-                    loading.classList.remove("d-none");
-                    content.classList.add("d-none");
-                    error.classList.add("d-none");
-                    productsBody.replaceChildren();
+                    const details = await response.json();
+                    if (request.signal.aborted) return;
 
-                    try {
-                        const response = await fetch(
-                            `${detailsUrl}?id=${encodeURIComponent(orderId)}`
-                        );
+                    selectedOrder = {
+                        ...order,
+                        orderNumber: details.orderNumber || order.orderNumber,
+                        customerName: details.customerName || order.customerName,
+                        status: details.status
+                    };
 
-                        if (!response.ok) {
-                            throw new Error("No se pudo cargar el pedido.");
-                        }
+                    document.getElementById("orderDetailsNumber").textContent = selectedOrder.orderNumber;
+                    document.getElementById("orderCustomerName").textContent = selectedOrder.customerName;
+                    document.getElementById("orderCustomerEmail").textContent = details.customerEmail || "No especificado";
+                    document.getElementById("orderCustomerPhone").textContent = details.customerPhone || "No especificado";
+                    document.getElementById("orderCustomerAddress").textContent = details.customerAddress || "No especificada";
+                    document.getElementById("orderDate").textContent =
+                        new Date(details.orderDate).toLocaleString("es-DO");
 
-                        const order = await response.json();
+                    configureStatus(details.status);
+                    document.getElementById("orderSubtotal").textContent = moneyFormat.format(details.subtotal);
+                    document.getElementById("orderDiscount").textContent = moneyFormat.format(details.discount);
+                    document.getElementById("orderTax").textContent = moneyFormat.format(details.tax);
+                    document.getElementById("orderTotal").textContent = moneyFormat.format(details.total);
+                    showProducts(details.products);
 
-                        document.getElementById(
-                            "orderDetailsNumber"
-                        ).textContent = order.orderNumber;
-
-                        document.getElementById(
-                            "orderCustomerName"
-                        ).textContent = order.customerName;
-
-                        document.getElementById(
-                            "orderCustomerEmail"
-                        ).textContent = order.customerEmail;
-
-                        document.getElementById(
-                            "orderCustomerPhone"
-                        ).textContent =
-                            order.customerPhone || "No especificado";
-
-                        document.getElementById(
-                            "orderCustomerAddress"
-                        ).textContent =
-                            order.customerAddress || "No especificada";
-
-                        const orderDate = new Date(order.orderDate);
-
-                        document.getElementById(
-                            "orderDate"
-                        ).textContent = orderDate.toLocaleString("es-DO");
-
-                        configureStatus(order.status);
-
-                        document.getElementById(
-                            "orderSubtotal"
-                        ).textContent = moneyFormat.format(order.subtotal);
-
-                        document.getElementById(
-                            "orderTotal"
-                        ).textContent = moneyFormat.format(order.total);
-
-                        showProducts(order.products);
-
-                        loading.classList.add("d-none");
-                        content.classList.remove("d-none");
-                    }
-                    catch {
-                        loading.classList.add("d-none");
-                        error.classList.remove("d-none");
-                    }
+                    loading.classList.add("d-none");
+                    content.classList.remove("d-none");
+                    deleteButton.disabled = false;
+                } catch (exception) {
+                    if (request.signal.aborted) return;
+                    loading.classList.add("d-none");
+                    error.classList.remove("d-none");
+                } finally {
+                    if (detailsRequest === request) detailsRequest = null;
                 }
-            );
+            });
+
+            deleteButton.addEventListener("click", function() {
+                if (!selectedOrder || deleteButton.disabled || openConfirmationAfterHide) return;
+                openConfirmationAfterHide = true;
+                infoModal.hide();
+            });
+
+            modal.addEventListener("shown.bs.modal", function() {
+                if (openConfirmationAfterHide) infoModal.hide();
+            });
+
+            modal.addEventListener("hidden.bs.modal", function() {
+                detailsRequest?.abort();
+                detailsRequest = null;
+
+                if (openConfirmationAfterHide) {
+                    openConfirmationAfterHide = false;
+                    confirmationModal.show();
+                }
+            });
+
+            confirmationElement.addEventListener("show.bs.modal", function(event) {
+                if (!selectedOrder) {
+                    event.preventDefault();
+                    return;
+                }
+
+                document.getElementById("deleteOrderId").value = selectedOrder.id;
+                document.getElementById("orderDeleteNumber").textContent = selectedOrder.orderNumber;
+                deleteSubmitted = false;
+                deleteSubmit.disabled = false;
+            });
+
+            confirmationElement.addEventListener("hidden.bs.modal", function() {
+                if (!deleteSubmitted && selectedOrder) infoModal.show();
+            });
+
+            editElement.addEventListener("show.bs.modal", function(event) {
+                const order = readOrder(event.relatedTarget);
+                if (!order) {
+                    event.preventDefault();
+                    return;
+                }
+
+                document.getElementById("editOrderForm").reset();
+                document.getElementById("editOrderId").value = order.id;
+                document.getElementById("editOrderNumber").textContent = order.orderNumber;
+                document.getElementById("editOrderCustomer").textContent = order.customerName;
+                document.getElementById("editOrderStatus").value = order.status;
+            });
+
+            deleteForm.addEventListener("submit", function(event) {
+                if (event.defaultPrevented) return;
+                if (!document.getElementById("deleteOrderId").value || deleteSubmitted) {
+                    event.preventDefault();
+                    return;
+                }
+
+                deleteSubmitted = true;
+                deleteSubmit.disabled = true;
+            });
 
             function showProducts(products) {
                 productsBody.replaceChildren();
@@ -395,61 +454,34 @@
                 if (!products || products.length === 0) {
                     const row = document.createElement("tr");
                     const cell = document.createElement("td");
-
                     cell.colSpan = 4;
                     cell.className = "text-center text-muted";
-                    cell.textContent =
-                        "Este pedido no contiene productos.";
-
+                    cell.textContent = "Este pedido no contiene productos.";
                     row.appendChild(cell);
                     productsBody.appendChild(row);
-
                     return;
                 }
 
                 products.forEach(function(product) {
                     const row = document.createElement("tr");
-
                     addCell(row, product.name);
-
-                    addCell(
-                        row,
-                        moneyFormat.format(product.unitPrice),
-                        "text-end"
-                    );
-
-                    addCell(
-                        row,
-                        product.quantity,
-                        "text-center"
-                    );
-
-                    addCell(
-                        row,
-                        moneyFormat.format(product.subtotal),
-                        "text-end fw-semibold"
-                    );
-
+                    addCell(row, moneyFormat.format(product.unitPrice), "text-end");
+                    addCell(row, product.quantity, "text-center");
+                    addCell(row, moneyFormat.format(product.subtotal), "text-end fw-semibold");
                     productsBody.appendChild(row);
                 });
             }
 
             function addCell(row, value, className = "") {
                 const cell = document.createElement("td");
-
                 cell.textContent = value;
                 cell.className = className;
-
                 row.appendChild(cell);
             }
 
-            function configureStatus(statusValue) {
-                const status =
-                    document.getElementById("orderStatus");
-
-                const normalizedStatus =
-                    statusValue.toLowerCase();
-
+            function configureStatus(value) {
+                const status = document.getElementById("orderStatus");
+                const normalized = String(value).toLowerCase();
                 const translations = {
                     pending: "Pendiente",
                     processing: "Procesando",
@@ -457,32 +489,16 @@
                     completed: "Completado",
                     cancelled: "Cancelado"
                 };
-
-                status.textContent =
-                    translations[normalizedStatus] || statusValue;
-
-                const statusClasses = {
+                const classes = {
                     pending: "badge bg-warning text-dark",
-                    pendiente: "badge bg-warning text-dark",
-
                     processing: "badge bg-primary",
-                    procesando: "badge bg-primary",
-
                     shipped: "badge bg-info text-dark",
-                    enviado: "badge bg-info text-dark",
-
                     completed: "badge bg-success",
-                    completado: "badge bg-success",
-
-                    cancelled: "badge bg-danger",
-                    cancelado: "badge bg-danger"
+                    cancelled: "badge bg-danger"
                 };
-
-                status.className =
-                    statusClasses[normalizedStatus]
-                    || "badge bg-secondary";
+                status.textContent = translations[normalized] || value;
+                status.className = classes[normalized] || "badge bg-secondary";
             }
-
 
             //create modal
             const createOrderForm =

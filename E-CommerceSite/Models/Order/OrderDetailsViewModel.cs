@@ -23,6 +23,8 @@ namespace E_CommerceSite.Models
 
         public OrderStatus Status { get; set; }
 
+        public List<OrderItemDetailsViewModel> Items { get; set; } = [];
+
         public ProductViewModel Products { get; set; } = new();
 
         public CustomerViewModel Customers { get; set; } = new();

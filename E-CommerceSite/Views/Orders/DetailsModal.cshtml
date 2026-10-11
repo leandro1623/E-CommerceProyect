@@ -11,7 +11,7 @@
      aria-labelledby="orderDetailsModalLabel"
      aria-hidden="true">
 
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
 
             <div class="modal-header">
@@ -148,6 +148,16 @@
 
                             <hr>
 
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Descuento:</span>
+                                <strong id="orderDiscount">RD$0.00</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Impuestos:</span>
+                                <strong id="orderTax">RD$0.00</strong>
+                            </div>
+
                             <div class="d-flex justify-content-between fs-5">
                                 <strong>Total:</strong>
 
@@ -169,6 +179,12 @@
                         class="btn btn-secondary"
                         data-bs-dismiss="modal">
                     Cerrar
+                </button>
+                <button type="button"
+                        class="btn btn-danger"
+                        id="openDeleteOrderConfirmation"
+                        disabled>
+                    Eliminar pedido
                 </button>
             </div>
 

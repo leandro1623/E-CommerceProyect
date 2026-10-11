@@ -271,6 +271,14 @@
                     maximumFractionDigits: 2
                 });
 
+                const form = document.getElementById("createProductForm");
+                const button = document.getElementById("createProductFormButtoSubmit");
+                
+                form.addEventListener("submit", function () {
+                    button.disabled = true;
+                    button.textContent = "Guardando...";
+                });
+
                 let selectedProduct = null;
                 let openConfirmationAfterHide = false;
                 let deleteSubmitted = false;
