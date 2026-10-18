@@ -13,11 +13,13 @@ namespace E_CommerceSite.Controllers
     {
         private readonly IManageUser userManager;
         private readonly ISignInManager signInManager;
+        private readonly ICanHandleCustomers handleCustomers;
 
-        public AccountController(IManageUser userManager, ISignInManager signInManager)
+        public AccountController(IManageUser userManager, ISignInManager signInManager, ICanHandleCustomers handleCustomers)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
+            this.handleCustomers = handleCustomers;
         }
 
         [AllowAnonymous]
@@ -70,11 +72,21 @@ namespace E_CommerceSite.Controllers
 
             var user = await userManager.GetUserManager().FindByEmailAsync(model.Email);
 
+
             if(user is null)
             {
                 @TempData["Error"] = "Usuario o contraceña incorrecto";
                 return View(model);
             }
+
+            var isDeleted = await handleCustomers.IsDeleted(user.Id);
+
+            if (isDeleted)
+            {
+                @TempData["Error"] = "Usuario o contraceña incorrecto";
+                return View(model);
+            }
+
 
             var result = await signInManager.GetSignInManager().PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
 

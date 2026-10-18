@@ -21,6 +21,7 @@ namespace E_CommerceSite.Negocio.Services
         Task<int> EditUser(Guid userId, string fullName, string email, string phone, string address);
         Task<List<Customer>> GetCustomers();
         Task<int> GetTotalCount();
+        Task<bool> IsDeleted(string entityUserId);
     }
 
     public class CanHandleCustomers : ICanHandleCustomers
@@ -180,6 +181,12 @@ namespace E_CommerceSite.Negocio.Services
             return await applicationDbContext.SaveChangesAsync();
         }
 
+        public async Task<bool> IsDeleted(string entityUserId)
+        {
+            var customer = applicationDbContext.Customer.Include(c => c.UserEntity).Where(c => c.UserEntity.Id == entityUserId).FirstOrDefault();
+
+            return customer!.IsDeleted;
+        }
 
         public async Task<int> GetTotalCount()
         {
