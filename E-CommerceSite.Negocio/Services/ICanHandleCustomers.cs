@@ -161,7 +161,7 @@ namespace E_CommerceSite.Negocio.Services
             }
 
             //Marcamos como eliminado
-            customer.IsDeleted = false;
+            customer.IsDeleted = true;
 
             //Creamos el registro de eliminacion
             var deletedItem = new DeletedEntities()
