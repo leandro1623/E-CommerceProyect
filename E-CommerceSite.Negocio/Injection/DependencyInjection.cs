@@ -1,5 +1,6 @@
 ﻿using E_CommerceSite.DATA;
 using E_CommerceSite.Datos.Customer;
+using E_CommerceSite.Datos.Seed;
 using E_CommerceSite.Negocio.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,9 @@ namespace E_CommerceSite.Negocio.Injection
     {
         public static IServiceCollection SetDbContext(this IServiceCollection services, string connectionString)
         {
-            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString)
+            .UseSeeding(Seeding.Aplicar)
+            .UseAsyncSeeding(Seeding.AplicarAsync));
 
             return services;
         }
@@ -25,6 +28,7 @@ namespace E_CommerceSite.Negocio.Injection
                 .AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
         }
 
+
         //public static IServiceCollection SetTransient<TService, TImplementation>(this IServiceCollection services) where TService : class where TImplementation : class, TService
         //{
         //    return services.AddTransient<TService, TImplementation>();
@@ -32,12 +36,12 @@ namespace E_CommerceSite.Negocio.Injection
 
         public static IServiceCollection SetServices(this IServiceCollection services)
         {
-            services.AddTransient<IManageUser, ManagerUser>();
-            services.AddTransient<ISignInManager, ManageSignIn>();
-            services.AddTransient<ICanHandleCustomers, CanHandleCustomers>();
-            services.AddTransient<IICanHandleProducts, ICanHandleProducts>();
-            services.AddTransient<IICanHandleCategories, ICanHandleCategories>();
-            services.AddTransient<IICanHandleOrders, ICanHandleOrders>();
+            services.AddScoped<IManageUser, ManagerUser>();
+            services.AddScoped<ISignInManager, ManageSignIn>();
+            services.AddScoped<ICanHandleCustomers, CanHandleCustomers>();
+            services.AddScoped<IICanHandleProducts, ICanHandleProducts>();
+            services.AddScoped<IICanHandleCategories, ICanHandleCategories>();
+            services.AddScoped<IICanHandleOrders, ICanHandleOrders>();
 
             return services;
         }

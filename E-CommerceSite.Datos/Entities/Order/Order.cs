@@ -26,6 +26,8 @@ namespace E_CommerceSite.Datos.OrderNameSpace
         [Precision(18, 2)]
         public decimal Total { get; set; }
 
+        //public bool IsDeleted { get; set; } = false;
+
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
         public Guid CustomerId { get; set; }
@@ -46,3 +48,4 @@ namespace E_CommerceSite.Datos.OrderNameSpace
         Cancelled
     }
 }
+

@@ -1,5 +1,6 @@
 ﻿using E_CommerceSite.DATA;
 using E_CommerceSite.Datos.Category;
+using E_CommerceSite.Datos.Entities.DeletedEntity;
 using E_CommerceSite.Datos.Product;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -12,6 +13,7 @@ namespace E_CommerceSite.Negocio.Services
     {
         Task<int> Create(Category category);
         Task<int> Delete(Guid id);
+        Task<int> Delete(Guid id, string userId);
         Task<int> Edit(Category category);
         Task<List<Category>> GetAll();
         Task<List<Category>> GetAllAsNotTraking();
@@ -19,32 +21,32 @@ namespace E_CommerceSite.Negocio.Services
 
     public class ICanHandleCategories : IICanHandleCategories
     {
-        private readonly ApplicationDbContext DbContext;
+        private readonly ApplicationDbContext dbContext;
 
         public ICanHandleCategories(ApplicationDbContext applicationDbContext)
         {
-            this.DbContext = applicationDbContext;
+            this.dbContext = applicationDbContext;
         }
 
         public async Task<List<Category>> GetAll()
         {
-            var categories = await DbContext.Categories.ToListAsync();
+            var categories = await dbContext.Categories.Where(c=>c.IsDeleted == false).ToListAsync();
 
             return categories;
         }
 
         public async Task<List<Category>> GetAllAsNotTraking()
         {
-            var categories = await DbContext.Categories.AsNoTracking().ToListAsync();
+            var categories = await dbContext.Categories.AsNoTracking().ToListAsync();
 
             return categories;
         }
 
         public async Task<int> Create(Category category)
         {
-            DbContext.Categories.Add(category);
+            dbContext.Categories.Add(category);
 
-            return await DbContext.SaveChangesAsync();
+            return await dbContext.SaveChangesAsync();
         }
 
         public async Task<int> Edit(Category category)
@@ -54,7 +56,7 @@ namespace E_CommerceSite.Negocio.Services
                 return -1; //Campos incompletos en el parametro enviado
             }
 
-            var categoryDb = DbContext.Categories.Where(c=>c.Id == category!.Id).AsTracking().FirstOrDefault();
+            var categoryDb = dbContext.Categories.Where(c=>c.Id == category!.Id).AsTracking().FirstOrDefault();
 
             if (categoryDb == null)
             {
@@ -66,7 +68,7 @@ namespace E_CommerceSite.Negocio.Services
             categoryDb.Name = category.Name;
             categoryDb.Description = category.Description;
 
-            var result = await DbContext.SaveChangesAsync();
+            var result = await dbContext.SaveChangesAsync();
 
             return result;
         }
@@ -78,25 +80,69 @@ namespace E_CommerceSite.Negocio.Services
                 return -1; //El parametro pasado esta vacio
             }
 
-            var category = await DbContext.Categories.FirstOrDefaultAsync(c => c.Id == id);
+            var category = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
             if(category == null)
             {
                 return -2;//-2 no existe la categoria en la Db
             }
 
-            var IsUsed = await DbContext.Products.Where(p=> p.CategoryId == category.Id).AnyAsync();
+            var IsUsed = await dbContext.Products.Where(p=> p.CategoryId == category.Id).AnyAsync();
 
             if(IsUsed)
             {
                 return -3;// la categoria que se desea eliminar tiene productos asociados, por el momento no sera posible eliminar esta hasta que este asociada a ningun producto
             }
 
-            DbContext.Remove(category); // se marca para eliminar
+            dbContext.Remove(category); // se marca para eliminar
 
-            var result = await DbContext.SaveChangesAsync(); // se envian cambios para elimanar de la db
+            var result = await dbContext.SaveChangesAsync(); // se envian cambios para elimanar de la db
 
             return result;
         }
+
+        public async Task<int> Delete(Guid id, string userId)
+        {
+            if (id == Guid.Empty)
+            {
+                return -1; //El parametro pasado esta vacio
+            }
+
+            var category = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == id);
+
+            if (category == null)
+            {
+                return -2;//-2 no existe la categoria en la Db
+            }
+
+            var IsUsed = await dbContext.Products.Where(p => p.CategoryId == category.Id).AnyAsync();
+
+            if (IsUsed)
+            {
+                return -3;// la categoria que se desea eliminar tiene productos asociados, por el momento no sera posible eliminar esta hasta que este asociada a ningun producto
+            }
+
+            //marcamos su eliminacion
+            category.IsDeleted = true;
+
+            //creamos el registro de eliminacion
+            var deletedEnitty = new DeletedEntities()
+            {
+                Id = Guid.NewGuid(),
+                DeletedAt = DateTime.UtcNow,
+                DeletedByUserId = userId,
+                //entidad eliminada
+                DeletedEntityId = category.Id,
+                EntityType = nameof(category),
+                Reason = ""
+            };
+
+            dbContext.DeletedEntities.Add(deletedEnitty);
+
+            var result = await dbContext.SaveChangesAsync(); // se envian cambios para elimanar de la db
+
+            return result;
+        }
+
     }
 }

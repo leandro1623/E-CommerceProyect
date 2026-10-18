@@ -1,13 +1,16 @@
 ﻿using Azure.Core;
+using E_CommerceSite.Datos;
 using E_CommerceSite.Datos.Entities.OrderNameSpace;
 using E_CommerceSite.Datos.OrderNameSpace;
 using E_CommerceSite.Datos.Product;
 using E_CommerceSite.Models;
 using E_CommerceSite.Models.Order;
 using E_CommerceSite.Negocio.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Metadata;
+using System.Security.Claims;
 
 namespace E_CommerceSite.Controllers
 {
@@ -147,6 +150,7 @@ namespace E_CommerceSite.Controllers
         }
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, OrderStatus? status)
         {
@@ -170,6 +174,7 @@ namespace E_CommerceSite.Controllers
         }
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -179,7 +184,12 @@ namespace E_CommerceSite.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            if (await handleOrders.Delete(id))
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Challenge();
+
+            if (await handleOrders.Delete(id, userId))
             {
                 TempData["SuccessMessage"] = "Pedido eliminado correctamente.";
             }
@@ -192,6 +202,7 @@ namespace E_CommerceSite.Controllers
         }
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(OrderDetailsViewModel model)
         {

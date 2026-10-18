@@ -1,5 +1,6 @@
 ﻿using E_CommerceSite.DATA;
 using E_CommerceSite.Datos.Customer;
+using E_CommerceSite.Datos.Entities.DeletedEntity;
 using E_CommerceSite.Datos.OrderNameSpace;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -16,6 +17,7 @@ namespace E_CommerceSite.Negocio.Services
         Task<Guid> CreateCustomer(string? phone, string? address, DateTime? createDate);
         Task<int> Delete(Guid id);
         Task<int> Delete(Guid id, string currentSignedUser);
+        Task<int> Delete(Guid id, string currentSignedUser, string userId);
         Task<int> EditUser(Guid userId, string fullName, string email, string phone, string address);
         Task<List<Customer>> GetCustomers();
         Task<int> GetTotalCount();
@@ -49,7 +51,7 @@ namespace E_CommerceSite.Negocio.Services
 
         public async Task<List<Customer>> GetCustomers()
         {
-            return await applicationDbContext.Customer.Include(c=>c.UserEntity).ToListAsync();
+            return await applicationDbContext.Customer.Where(c => c.IsDeleted == false).Include(c => c.UserEntity).ToListAsync();
         }
 
         public async Task<int> EditUser(Guid userId, string fullName, string email, string phone, string address)
@@ -82,9 +84,12 @@ namespace E_CommerceSite.Negocio.Services
             }
 
             // validamos si tiene ordenes pendientes o en proceso para no eliminarlo
-            var hasOrders = await applicationDbContext.Orders.Where(o => o.CustomerId == customer.Id && o.Status != OrderStatus.Processing && o.Status == OrderStatus.Pending).FirstOrDefaultAsync();
+            var hasOrders = await applicationDbContext.Orders
+                .Where(o => o.CustomerId == customer.Id)
+                .Where(o => o.Status == OrderStatus.Processing || o.Status == OrderStatus.Pending || o.Status == OrderStatus.Shipped)
+                .FirstOrDefaultAsync();
 
-            if(hasOrders != null)
+            if (hasOrders != null)
             {
                 return -3;
             }
@@ -96,6 +101,8 @@ namespace E_CommerceSite.Negocio.Services
             applicationDbContext.Customer.Remove(customer);
             return await applicationDbContext.SaveChangesAsync();
         }
+
+
 
         public async Task<int> Delete(Guid id, string currentSignedUser)
         {
@@ -113,8 +120,10 @@ namespace E_CommerceSite.Negocio.Services
 
 
             // validamos si tiene ordenes pendientes o en proceso para no eliminarlo
-            var hasOrders = await applicationDbContext.Orders.
-                Where(o => o.CustomerId == customer.Id && o.Status != OrderStatus.Processing || o.Status == OrderStatus.Pending).FirstOrDefaultAsync();
+            var hasOrders = await applicationDbContext.Orders
+                .Where(o => o.CustomerId == customer.Id)
+                .Where( o=> o.Status == OrderStatus.Processing || o.Status == OrderStatus.Pending || o.Status == OrderStatus.Shipped)
+                .FirstOrDefaultAsync();
 
             if (hasOrders != null)
             {   
@@ -125,6 +134,52 @@ namespace E_CommerceSite.Negocio.Services
             applicationDbContext.Customer.Remove(customer);
             return await applicationDbContext.SaveChangesAsync();
         }
+
+        public async Task<int> Delete(Guid id, string currentSignedUser, string userId)
+        {
+            var customer = applicationDbContext.Customer.Where(c => c.Id == id).Include(c => c.UserEntity).FirstOrDefault();
+
+            if (customer == null)// puede haber un error por que UserEntity puede ser null y no se esta validando actualmente
+            {
+                return -2; //-2 significa que el usuario que se intenta eliminar no existe en la DB
+            }
+
+            if (currentSignedUser == customer.UserEntity.Id)
+            {
+                return -1; // -1 Significa que se esta intentando eliminar el mismo usuario logueado
+            }
+
+            // validamos si tiene ordenes pendientes o en proceso para no eliminarlo
+            var hasOrders = await applicationDbContext.Orders
+                .Where(o => o.CustomerId == customer.Id)
+                .Where(o => o.Status == OrderStatus.Processing || o.Status == OrderStatus.Pending || o.Status == OrderStatus.Shipped)
+                .FirstOrDefaultAsync();
+
+            if (hasOrders != null)
+            {
+                return -3;
+            }
+
+            //Marcamos como eliminado
+            customer.IsDeleted = false;
+
+            //Creamos el registro de eliminacion
+            var deletedItem = new DeletedEntities()
+            {
+                Id = Guid.NewGuid(),
+                DeletedAt = DateTime.UtcNow,
+                DeletedByUserId = userId,
+                //entidad eliminada
+                DeletedEntityId = customer.Id,
+                EntityType = nameof(Customer),
+                Reason = ""
+            };
+
+            applicationDbContext.DeletedEntities.Add(deletedItem);
+            
+            return await applicationDbContext.SaveChangesAsync();
+        }
+
 
         public async Task<int> GetTotalCount()
         {

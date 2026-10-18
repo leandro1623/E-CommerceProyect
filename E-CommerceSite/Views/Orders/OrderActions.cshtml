@@ -1,3 +1,4 @@
+@using E_CommerceSite.Datos
 @model OrderDetailsViewModel
 
 <div class="d-flex justify-content-center gap-2 flex-wrap order-actions"
@@ -13,8 +14,12 @@
             data-bs-toggle="modal" data-bs-target="#editOrderModal">
         Cambiar estado
     </button>
-    <button type="button" class="btn btn-sm btn-outline-danger"
-            data-bs-toggle="modal" data-bs-target="#orderDetailsModal">
-        Eliminar
-    </button>
+    @if (User.IsInRole(Constantes.Admin))
+    {
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                data-bs-toggle="modal" data-bs-target="#orderDetailsModal">
+                   Eliminar
+            </button>
+    }
+
 </div>

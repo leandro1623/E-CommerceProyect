@@ -1,5 +1,6 @@
 ﻿@model ProductViewModel
 @using System.Globalization
+@using E_CommerceSite.Datos
 
 <div class="d-flex gap-2 flex-wrap product-actions"
      data-product-id="@Model.Id"
@@ -16,7 +17,8 @@
             data-bs-target="#productInfoModal">
         Ver
     </button>
-
+    @if (User.IsInRole(Constantes.Admin))
+    {
     <button type="button"
             class="btn btn-sm btn-outline-primary"
             data-bs-toggle="modal"
@@ -30,4 +32,6 @@
             data-bs-target="#productInfoModal">
         Eliminar
     </button>
+
+    }
 </div>

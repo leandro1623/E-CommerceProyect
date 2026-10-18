@@ -8,6 +8,8 @@ namespace E_CommerceSite.Datos.Category
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
 
+        public bool IsDeleted { get; set; } = false;
+
         public string Description { get; set; } = string.Empty;
     }
 }

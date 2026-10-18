@@ -1,5 +1,6 @@
 ﻿using E_CommerceSite.Datos.Category;
 using E_CommerceSite.Datos.Customer;
+using E_CommerceSite.Datos.Entities.DeletedEntity;
 using E_CommerceSite.Datos.Entities.OrderNameSpace;
 using E_CommerceSite.Datos.OrderNameSpace;
 using E_CommerceSite.Datos.Product;
@@ -26,6 +27,8 @@ namespace E_CommerceSite.DATA
 
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+
+        public DbSet<DeletedEntities> DeletedEntities { get; set; }
 
     }
 }

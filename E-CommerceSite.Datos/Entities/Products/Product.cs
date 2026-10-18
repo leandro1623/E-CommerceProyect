@@ -18,6 +18,7 @@ namespace E_CommerceSite.Datos.Product
 
         public int Stock {  get; set; } = 0;
 
+        public bool IsDeleted { get; set; } = false;
 
         //Category
 

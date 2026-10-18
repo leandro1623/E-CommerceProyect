@@ -35,6 +35,8 @@ namespace E_CommerceSite.Datos.Customer
         //[Required]
         //public string UserEntityId { get; set; }
 
+        public bool IsDeleted { get; set; } = false;
+
         public UserEntity UserEntity { get; set; } = null!; //propiedad de navegacion
     }
 }

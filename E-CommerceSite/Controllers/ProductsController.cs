@@ -1,7 +1,10 @@
-﻿using E_CommerceSite.Datos.Product;
+﻿using E_CommerceSite.Datos;
+using E_CommerceSite.Datos.Product;
 using E_CommerceSite.Models;
 using E_CommerceSite.Negocio.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace E_CommerceSite.Controllers
 {
@@ -53,6 +56,7 @@ namespace E_CommerceSite.Controllers
         }
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductViewModel model)
         {
@@ -89,6 +93,7 @@ namespace E_CommerceSite.Controllers
 
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ProductViewModel model)
         {
@@ -99,7 +104,7 @@ namespace E_CommerceSite.Controllers
             if (!ModelState.IsValid)
             {
                 TempData["Errormessage"] = "Ha ocurrido un error al agregar el producto";
-                RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
             }
 
             var product = new Product()
@@ -127,6 +132,7 @@ namespace E_CommerceSite.Controllers
         }
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -136,7 +142,12 @@ namespace E_CommerceSite.Controllers
                 RedirectToAction(nameof(Index));
             }
 
-            var result = await handleProducts.Delete(id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Challenge();
+
+            var result = await handleProducts.Delete(id, userId);
 
             if(result > 0)
             {

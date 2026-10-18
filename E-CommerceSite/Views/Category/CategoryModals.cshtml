@@ -1,4 +1,5 @@
-﻿@model CategoryViewModel
+﻿@using E_CommerceSite.Datos
+@model CategoryViewModel
 
 <!-- Información: los botones Ver y Eliminar de la tabla abren este modal. -->
 <div class="modal fade"
@@ -39,11 +40,15 @@
                         data-bs-dismiss="modal">
                     Cerrar
                 </button>
+                @if (User.IsInRole(Constantes.Admin))
+                {
                 <button type="button"
                         id="openDeleteCategoryConfirmation"
                         class="btn btn-danger">
                     Eliminar categoría
                 </button>
+
+                }
             </div>
         </div>
     </div>

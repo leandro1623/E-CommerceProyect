@@ -1,9 +1,12 @@
-﻿using E_CommerceSite.Datos.Category;
+﻿using E_CommerceSite.Datos;
+using E_CommerceSite.Datos.Category;
 using E_CommerceSite.Models;
 using E_CommerceSite.Negocio.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Security.Claims;
 
 namespace E_CommerceSite.Controllers
 {
@@ -33,6 +36,7 @@ namespace E_CommerceSite.Controllers
         }
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CategoryViewModel model)
             {
@@ -66,6 +70,7 @@ namespace E_CommerceSite.Controllers
         }
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CategoryViewModel model)
         {
@@ -99,6 +104,7 @@ namespace E_CommerceSite.Controllers
         }
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         public async Task<IActionResult> Delete(Guid id)
         {
             if(id == Guid.Empty)
@@ -107,7 +113,12 @@ namespace E_CommerceSite.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var resultado = await handleCategories.Delete(id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Challenge();
+
+            var resultado = await handleCategories.Delete(id, userId);
 
             if(resultado > 0)
             {

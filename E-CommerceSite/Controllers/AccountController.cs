@@ -1,11 +1,14 @@
-﻿using E_CommerceSite.Models;
+﻿using E_CommerceSite.Datos;
+using E_CommerceSite.Models;
 using E_CommerceSite.Negocio.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication;
 
 namespace E_CommerceSite.Controllers
 {
+    
     public class AccountController : Controller
     {
         private readonly IManageUser userManager;

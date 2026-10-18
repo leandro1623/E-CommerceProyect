@@ -1,4 +1,5 @@
 ﻿@model ProductViewModel
+@using E_CommerceSite.Datos
 
 @{
     var categories = Model.Category?.Categories
@@ -63,7 +64,7 @@
                 </button>
 
                 <button type="button"
-                        class="btn btn-danger"
+                        class="btn btn-danger @(User.IsInRole(Constantes.Admin) == false ? "disabled": "")"
                         id="openDeleteProductConfirmation">
                     Eliminar producto
                 </button>

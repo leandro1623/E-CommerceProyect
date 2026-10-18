@@ -1,4 +1,5 @@
 ﻿using E_CommerceSite.DATA;
+using E_CommerceSite.Datos.Entities.DeletedEntity;
 using E_CommerceSite.Datos.OrderNameSpace;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -21,6 +22,7 @@ namespace E_CommerceSite.Negocio.Services
         Task<List<OrderStatusSummaryViewModel>> GetOrdersByStatus();
         Task<int> GetTotalCount();
         Task<decimal> GetTotalSales();
+        Task<bool> Delete(Guid id, string userId);
     }
 
     public class ICanHandleOrders : IICanHandleOrders
@@ -93,6 +95,38 @@ namespace E_CommerceSite.Negocio.Services
             }
 
             dbContext.Orders.Remove(order);
+            await dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> Delete(Guid id, string userId)
+        {
+            var order = await dbContext.Orders
+                .Include(order => order.Items)
+                .SingleOrDefaultAsync(order => order.Id == id);
+
+            if (order == null)
+            {
+                return false;
+            }
+
+
+            //Marcamos como cancelado
+            order.Status = OrderStatus.Cancelled;
+
+            //Creamos el registro de cancelacion
+            var deletedEntity = new DeletedEntities()
+            {
+                Id = Guid.NewGuid(),
+                DeletedAt = DateTime.UtcNow,
+                DeletedByUserId = userId,
+                //cancelled order
+                DeletedEntityId = order.Id,
+                EntityType = nameof(OrderStatus.Cancelled),
+                Reason = ""
+            };
+            dbContext.DeletedEntities.Add(deletedEntity);
+
             await dbContext.SaveChangesAsync();
             return true;
         }

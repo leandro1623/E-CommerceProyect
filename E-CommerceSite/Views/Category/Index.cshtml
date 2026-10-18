@@ -1,4 +1,5 @@
-﻿@model CategoryViewModel
+﻿@using E_CommerceSite.Datos
+@model CategoryViewModel
 
 @{
     ViewData["Title"] = "Categorías";
@@ -52,12 +53,16 @@
         + Nueva categoría
     </a> *@
 
-    <button type="button"
-            class="btn btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#createCategoryModal">
-        + Nueva categoría
-    </button>
+    @if(User.IsInRole(Constantes.Admin))
+    {
+        <button type="button"
+                class="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#createCategoryModal">
+            + Nueva categoría
+        </button>
+    }
+
 
 </div>
 
@@ -113,6 +118,8 @@
                                         Ver
                                     </button>
 
+                                    @if (User.IsInRole(Constantes.Admin))
+                                    {
                                     <button type="button"
                                             class="btn btn-sm btn-outline-primary"
                                             data-bs-toggle="modal"
@@ -133,6 +140,8 @@
                                         Eliminar
                                     </button>
 
+
+                                    }
                                 </div>
                             </td>
                         </tr>

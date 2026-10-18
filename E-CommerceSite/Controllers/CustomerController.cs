@@ -1,13 +1,16 @@
-﻿using E_CommerceSite.Datos.Customer;
+﻿using E_CommerceSite.Datos;
+using E_CommerceSite.Datos.Customer;
 using E_CommerceSite.Models;
 using E_CommerceSite.Negocio.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace E_CommerceSite.Controllers
 {
+    [Authorize(Roles = Constantes.Admin)]
     public class CustomerController : Controller
     {
         //TODO: probar eliminar un usuario con ordenes pendientes o en proceso aun no se prueba
@@ -18,6 +21,7 @@ namespace E_CommerceSite.Controllers
             this.handleCustomers = handleCustomers;
         }
 
+        [Authorize(Constantes.Admin)]
         public async Task<IActionResult> Index(string m = "")
         {
             //if (!User.Identity!.IsAuthenticated)
@@ -51,6 +55,7 @@ namespace E_CommerceSite.Controllers
         }
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid Id)
         {
@@ -63,7 +68,10 @@ namespace E_CommerceSite.Controllers
 
             var currentUserIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier)!;//Se toma el id del usuario actual, para comparar si se esta eliminando el mismo
 
-            int deleted = await handleCustomers.Delete(Id, currentUserIdClaim);
+            if (string.IsNullOrWhiteSpace(currentUserIdClaim))
+                return Challenge();
+
+            int deleted = await handleCustomers.Delete(Id, currentUserIdClaim, currentUserIdClaim);
 
             //int deleted = await handleCustomers.Delete(Id);
 
@@ -92,6 +100,7 @@ namespace E_CommerceSite.Controllers
         }
 
         [HttpPost]
+        [Authorize(Constantes.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditarCustomerViewModel model)
         {
