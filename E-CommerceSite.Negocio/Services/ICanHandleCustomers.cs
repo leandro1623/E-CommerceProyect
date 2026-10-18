@@ -185,7 +185,7 @@ namespace E_CommerceSite.Negocio.Services
         {
             var customer = applicationDbContext.Customer.Include(c => c.UserEntity).Where(c => c.UserEntity.Id == entityUserId).FirstOrDefault();
 
-            return customer!.IsDeleted;
+            return customer == null || customer!.IsDeleted;
         }
 
         public async Task<int> GetTotalCount()
